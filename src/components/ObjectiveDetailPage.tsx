@@ -887,20 +887,65 @@ Generate the complete HTML with all sections filled in appropriately based on th
     processed = processed.replace(/Assured\s*\|\s*Committed\s*\|\s*Proficient/gi, '');
 
     // 3. Fix the logo - replace any logo with correct one (2px margin = ~0.5cm spacing)
+    const logoImg = `<img src="${logoUrl}" alt="Hope Hospital" class="logo" style="width: 180px; height: auto; margin: 0 auto 2px; display: block;" onerror="this.style.display='none'">`;
+
     processed = processed.replace(
       /<img[^>]*class="logo"[^>]*>/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" class="logo" style="width: 180px; height: auto; margin: 0 auto 2px; display: block;" onerror="this.style.display='none'">`
+      logoImg
     );
 
-    // 4. Replace logo placeholders
+    // 4. Replace logo placeholders - various patterns AI might generate
     processed = processed.replace(
-      /<div class="logo-area">[\s\S]*?<\/div>/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin: 0 auto 2px; display: block;">`
+      /<div[^>]*class="logo-area"[^>]*>[\s\S]*?<\/div>/gi,
+      logoImg
+    );
+    processed = processed.replace(
+      /<div[^>]*class="logo"[^>]*>[\s\S]*?<\/div>/gi,
+      logoImg
     );
     processed = processed.replace(
       /HOSPITAL\s*(<br\s*\/?>)?\s*LOGO/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto;">`
+      logoImg
     );
+    // Replace SVG logo placeholders
+    processed = processed.replace(
+      /<svg[^>]*class="logo"[^>]*>[\s\S]*?<\/svg>/gi,
+      logoImg
+    );
+    // Replace any img with logo in src that isn't our actual logo
+    processed = processed.replace(
+      /<img[^>]*src="[^"]*logo[^"]*"[^>]*>/gi,
+      logoImg
+    );
+    // Replace text-based logo placeholders in header
+    processed = processed.replace(
+      /<div[^>]*class="hospital-logo"[^>]*>[\s\S]*?<\/div>/gi,
+      logoImg
+    );
+    // Replace [LOGO] or [Hospital Logo] placeholders
+    processed = processed.replace(
+      /\[(?:HOSPITAL\s*)?LOGO\]/gi,
+      logoImg
+    );
+    // Replace "Hope ring eran" or similar broken text (from SVG rendering)
+    processed = processed.replace(
+      /Hope\s*ring\s*eran/gi,
+      ''
+    );
+
+    // 4b. Inject logo into header if not present - replace hospital name at top with logo + name
+    if (!processed.includes(logoUrl)) {
+      // Replace the first "Hope Hospital" heading with logo + name
+      processed = processed.replace(
+        /<h1[^>]*>Hope Hospital<\/h1>/i,
+        `<div style="text-align: center;">${logoImg}<h1 style="margin-top: 5px; font-size: 24px; color: #1565C0;">Hope Hospital</h1></div>`
+      );
+      // Also try with div class hospital-name
+      processed = processed.replace(
+        /<div[^>]*class="hospital-name"[^>]*>Hope Hospital<\/div>/i,
+        `<div style="text-align: center;">${logoImg}<div class="hospital-name" style="margin-top: 5px; font-size: 20px; font-weight: bold; color: #1565C0;">Hope Hospital</div></div>`
+      );
+    }
 
     // 5. Fix hospital-address div to have correct phone
     processed = processed.replace(
