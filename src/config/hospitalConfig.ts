@@ -47,6 +47,20 @@ export const NABH_TEAM: TeamMember[] = [
     ],
   },
   {
+    name: 'Suraj',
+    role: 'Documentation Officer',
+    designation: 'NABH Documentation Officer',
+    department: 'Quality Documentation',
+    responsibilities: [
+      'Maintain and update NABH documentation system',
+      'Ensure proper version control of policies and SOPs',
+      'Coordinate document review and approval processes',
+      'Archive and organize quality records and evidences',
+      'Support departments in documentation compliance',
+      'Prepare documentation for NABH assessments',
+    ],
+  },
+  {
     name: 'Gaurav',
     role: 'Administrator',
     designation: 'Hospital Administrator',
@@ -188,20 +202,6 @@ export const NABH_TEAM: TeamMember[] = [
       'Support accreditation assessment preparations',
     ],
   },
-  {
-    name: 'Suraj',
-    role: 'Documentation Officer',
-    designation: 'NABH Documentation Officer',
-    department: 'Quality Documentation',
-    responsibilities: [
-      'Maintain and update NABH documentation system',
-      'Ensure proper version control of policies and SOPs',
-      'Coordinate document review and approval processes',
-      'Archive and organize quality records and evidences',
-      'Support departments in documentation compliance',
-      'Prepare documentation for NABH assessments',
-    ],
-  },
 ];
 
 // Get team member by name
@@ -237,52 +237,52 @@ NABH Accreditation Team - Hope Hospital:
    - Conducts gap analysis, training, and internal audits
    - Maintains documentation and liaises with assessors
 
-2. Administrator: Gaurav
+2. Documentation Officer: Suraj
+   - Maintains NABH documentation system
+   - Ensures proper version control of policies and SOPs
+   - Prepares documentation for assessments
+
+3. Administrator: Gaurav
    - Overall hospital administration
    - Supports NABH accreditation efforts
 
-3. NABH Champion / MRD: Kashish
+4. NABH Champion / MRD: Kashish
    - Departmental lead for Medical Records
    - Implements NABH protocols within department
    - Monitors quality indicators and documentation
 
-4. Quality Manager / HR: Jagruti
+5. Quality Manager / HR: Jagruti
    - Oversees Quality Management System (QMS)
    - Manages performance indicators and audits
    - Facilitates quality improvement projects
    - HR management and staff development
 
-5. Infection Control Nurse: Chandraprakash Bisen
+6. Infection Control Nurse: Chandraprakash Bisen
    - Implements infection control protocols
    - Monitors hospital-acquired infections
    - Conducts infection control training
    - Hand hygiene compliance monitoring
 
-6. Head Nurse: Farsana
+7. Head Nurse: Farsana
    - Oversees nursing staff and patient care
    - Ensures nursing protocols compliance
    - Quality of nursing care monitoring
 
-7. Patient Safety Officer: Diksha
+8. Patient Safety Officer: Diksha
    - Implements patient safety protocols
    - Monitors patient safety indicators
    - Investigates adverse events and near misses
    - Coordinates patient safety training
 
-8. Patient Experience Coordinator: Neesha
+9. Patient Experience Coordinator: Neesha
    - Manages patient feedback and grievance redressal
    - Conducts patient satisfaction surveys
    - Coordinates patient rights and education initiatives
 
-9. Clinical Audit Coordinator: Sonali
-   - Plans and conducts clinical audits
-   - Analyzes audit findings and prepares reports
-   - Tracks implementation of recommendations
-
-10. Documentation Officer: Suraj
-    - Maintains NABH documentation system
-    - Ensures proper version control of policies and SOPs
-    - Prepares documentation for assessments
+10. Clinical Audit Coordinator: Sonali
+    - Plans and conducts clinical audits
+    - Analyzes audit findings and prepares reports
+    - Tracks implementation of recommendations
 `;
 
 // Detailed NABH Assessor Prompt for Evidence Generation
@@ -292,6 +292,7 @@ Using the objective element description provided, generate COMPREHENSIVE, PRACTI
 
 KEY STAFF MEMBERS:
 - NABH Coordinator: Dr. Shiraz Sheikh
+- Documentation Officer: Suraj (Senior Member)
 - Administrator: Gaurav
 - NABH Champion / MRD: Kashish
 - Quality Manager / HR: Jagruti
@@ -300,7 +301,6 @@ KEY STAFF MEMBERS:
 - Patient Safety Officer: Diksha
 - Patient Experience Coordinator: Neesha
 - Clinical Audit Coordinator: Sonali
-- Documentation Officer: Suraj
 
 Follow these STRICT rules:
 
