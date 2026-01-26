@@ -195,7 +195,7 @@ export default function LandingPage() {
                     }}
                     startIcon={<Icon>description</Icon>}
                   >
-                    Evidence Generator
+                    Quality Documentation Assistant
                   </Button>
                 </Box>
               </Box>
@@ -455,7 +455,7 @@ export default function LandingPage() {
               }}
               startIcon={<Icon>description</Icon>}
             >
-              Evidence Generator
+              Quality Documentation Assistant
             </Button>
           </Box>
         </Container>

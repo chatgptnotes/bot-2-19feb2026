@@ -99,7 +99,7 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingSOP, setIsGeneratingSOP] = useState(false);
   const [generatedSOPContent, setGeneratedSOPContent] = useState('');
 
-  // State for Evidence Generator
+  // State for Quality Documentation Assistant
   const [isGeneratingEvidence, setIsGeneratingEvidence] = useState(false);
   const [generatedEvidenceList, setGeneratedEvidenceList] = useState<string[]>([]);
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
@@ -114,7 +114,7 @@ export default function ObjectiveDetailPage() {
   const [isLoadingFromDb, setIsLoadingFromDb] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // State for Evidence Document Generator
+  // State for Quality Document Builder
   interface ParsedEvidenceItem {
     id: string;
     text: string;
@@ -852,7 +852,7 @@ Generate the complete HTML with all sections filled in appropriately based on th
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Evidence Document - Hope Hospital</title>
+  <title>Quality Document - Hope Hospital</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
@@ -2427,18 +2427,18 @@ DESIGN REQUIREMENTS:
 
           <Divider />
 
-          {/* Evidence Generator Section */}
+          {/* Quality Documentation Assistant Section */}
           <Accordion defaultExpanded sx={{ bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
             <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Icon color="primary">auto_awesome</Icon>
-                <Typography fontWeight={600}>Evidence Generator</Typography>
+                <Typography fontWeight={600}>Quality Documentation Assistant</Typography>
               </Box>
             </AccordionSummary>
             <AccordionDetails>
               <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  Generate a prioritized list of up to 10 evidences specific to this objective element.
+                  Generate a prioritized list of up to 10 documentation items specific to this objective element.
                   The list will be sorted by importance (most critical first).
                 </Typography>
               </Alert>
@@ -2488,16 +2488,16 @@ DESIGN REQUIREMENTS:
             size="small"
             placeholder="List the evidence required for this objective (max 10 items, highest priority first)..."
             sx={expandableTextFieldSx}
-            helperText="List evidences in order of priority. Use generator above to auto-generate."
+            helperText="List documentation items in order of priority. Use the assistant above to create list."
           />
 
-          {/* Evidence Document Generator */}
+          {/* Quality Document Builder */}
           {parsedEvidenceItems.length > 0 && (
             <Accordion defaultExpanded sx={{ bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
               <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Icon color="success">description</Icon>
-                  <Typography fontWeight={600}>Generate Evidence Documents</Typography>
+                  <Typography fontWeight={600}>Generate Quality Documents</Typography>
                   {selectedEvidenceCount > 0 && (
                     <Chip
                       label={`${selectedEvidenceCount} selected`}
@@ -2571,25 +2571,25 @@ DESIGN REQUIREMENTS:
             </Accordion>
           )}
 
-          {/* Custom Evidence Generator */}
+          {/* Custom Document Builder */}
           <Accordion sx={{ bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
             <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Icon color="warning">edit_note</Icon>
-                <Typography fontWeight={600}>Custom Evidence Generator</Typography>
+                <Typography fontWeight={600}>Custom Document Builder</Typography>
               </Box>
             </AccordionSummary>
             <AccordionDetails>
               <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  Enter your own requirement to generate a custom evidence document. Describe what document you need and the system will create it with proper hospital branding and formatting.
+                  Enter your own requirement to generate a custom quality document. Describe what document you need and the system will create it with proper hospital branding and formatting.
                 </Typography>
               </Alert>
               <TextField
                 fullWidth
                 multiline
                 rows={3}
-                label="Enter your evidence document requirement"
+                label="Enter your document requirement"
                 placeholder="Example: Create a patient feedback form for OPD services with fields for patient name, date, department visited, doctor name, waiting time, staff behavior rating, facility cleanliness rating, overall satisfaction, and suggestions..."
                 value={customEvidencePrompt}
                 onChange={(e) => setCustomEvidencePrompt(e.target.value)}
@@ -2602,7 +2602,7 @@ DESIGN REQUIREMENTS:
                 onClick={handleGenerateCustomEvidence}
                 disabled={isGeneratingCustomEvidence || !customEvidencePrompt.trim()}
               >
-                {isGeneratingCustomEvidence ? 'Generating Custom Evidence...' : 'Generate Custom Evidence'}
+                {isGeneratingCustomEvidence ? 'Generating Custom Document...' : 'Generate Custom Document'}
               </Button>
             </AccordionDetails>
           </Accordion>
@@ -2789,12 +2789,12 @@ DESIGN REQUIREMENTS:
             </AccordionDetails>
           </Accordion>
 
-          {/* Generated Evidences Section - Always visible */}
+          {/* Quality Documents Library - Always visible */}
           <Accordion defaultExpanded sx={{ bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
             <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Icon color="info">folder_open</Icon>
-                <Typography fontWeight={600}>Generated Evidence Documents & Registers</Typography>
+                <Typography fontWeight={600}>Quality Documents Library</Typography>
                 <Chip
                   label={savedEvidences.length}
                   size="small"

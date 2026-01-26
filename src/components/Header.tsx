@@ -65,7 +65,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </Button>
           </Tooltip>
           <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 1 }} />
-          <Tooltip title="Evidence Generator">
+          <Tooltip title="Quality Documentation Assistant">
             <Button
               color="inherit"
               startIcon={<Icon>auto_awesome</Icon>}
@@ -75,7 +75,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
               }}
             >
-              Generator
+              Documents
             </Button>
           </Tooltip>
           <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 1 }} />
