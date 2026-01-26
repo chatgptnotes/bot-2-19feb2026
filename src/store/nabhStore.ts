@@ -88,14 +88,14 @@ export const useNABHStore = create<NABHStore>()(
       },
     }),
     {
-      name: 'nabh-evidence-storage-v6',
-      version: 6,
+      name: 'nabh-evidence-storage-v7',
+      version: 7,
       migrate: (persistedState: unknown, version: number) => {
         // When version changes, merge persisted user data with fresh nabhData
-        // Version 6: Updated COP standards to match NABH SHCO 3rd Edition PDF exactly
-        // COP now has 13 standards (COP.1-COP.13) with correct objective elements and CORE designations
-        if (version < 6) {
-          // Return fresh data from nabhData (which includes new fields)
+        // Version 7: Updated Hindi explanations to be detailed and accurate translations of interpretations
+        // Hindi explanations now properly explain the full interpretation, not just the title
+        if (version < 7) {
+          // Return fresh data from nabhData (which includes new Hindi explanations)
           return {
             ...(persistedState as NABHStore),
             chapters: nabhData,

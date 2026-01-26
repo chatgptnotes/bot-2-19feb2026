@@ -561,20 +561,32 @@ Provide only the Hindi explanation, no English text. The explanation should be c
           </Box>
 
           {/* Hindi Explanation Section */}
-          {objective.hindiExplanation && (
-            <Accordion defaultExpanded sx={{ bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
-              <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Icon color="warning">translate</Icon>
-                  <Typography fontWeight={600}>Hindi Explanation (Staff Training)</Typography>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Alert severity="info" icon={<Icon>school</Icon>} sx={{ mb: 2 }}>
-                  <Typography variant="body2">
-                    This explanation is for staff training purposes. Share with your team.
-                  </Typography>
-                </Alert>
+          <Accordion defaultExpanded sx={{ bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
+            <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon color="warning">translate</Icon>
+                <Typography fontWeight={600}>Hindi Explanation (Staff Training)</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Alert severity="info" icon={<Icon>school</Icon>} sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  This explanation is for staff training purposes. If the interpretation above has been edited, click the button below to regenerate the Hindi translation.
+                </Typography>
+              </Alert>
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={isGeneratingHindi ? <CircularProgress size={16} color="inherit" /> : <Icon>refresh</Icon>}
+                  onClick={() => handleGenerateHindiExplanation(objective.description)}
+                  disabled={isGeneratingHindi || !objective.description}
+                  size="small"
+                >
+                  {isGeneratingHindi ? 'Generating...' : 'Update Hindi Explanation from Interpretation'}
+                </Button>
+              </Box>
+              {objective.hindiExplanation ? (
                 <Typography
                   variant="body1"
                   sx={{
@@ -590,9 +602,15 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 >
                   {objective.hindiExplanation}
                 </Typography>
-              </AccordionDetails>
-            </Accordion>
-          )}
+              ) : (
+                <Alert severity="warning" icon={<Icon>info</Icon>}>
+                  <Typography variant="body2">
+                    No Hindi explanation available. Click the button above to generate one from the interpretation.
+                  </Typography>
+                </Alert>
+              )}
+            </AccordionDetails>
+          </Accordion>
 
           <Divider />
 
