@@ -26,10 +26,25 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Snackbar from '@mui/material/Snackbar';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
-import { ASSIGNEE_OPTIONS, HOSPITAL_INFO } from '../config/hospitalConfig';
-import { getClaudeApiKey } from '../lib/supabase';
+import { ASSIGNEE_OPTIONS, HOSPITAL_INFO, getNABHCoordinator } from '../config/hospitalConfig';
+import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
+import {
+  saveObjectiveToSupabase,
+  loadObjectiveFromSupabase,
+  saveGeneratedEvidence,
+  updateGeneratedEvidence,
+  loadGeneratedEvidences,
+  deleteGeneratedEvidence,
+  type GeneratedEvidence,
+} from '../services/objectiveStorage';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -89,6 +104,44 @@ export default function ObjectiveDetailPage() {
   const [generatedEvidenceList, setGeneratedEvidenceList] = useState<string[]>([]);
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
 
+  // State for Infographic Generator
+  const [isGeneratingInfographic, setIsGeneratingInfographic] = useState(false);
+  const [generatedInfographicSvg, setGeneratedInfographicSvg] = useState<string>('');
+  const [infographicSaveStatus, setInfographicSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  // State for Supabase persistence
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isLoadingFromDb, setIsLoadingFromDb] = useState(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // State for Evidence Document Generator
+  interface ParsedEvidenceItem {
+    id: string;
+    text: string;
+    selected: boolean;
+  }
+  const [parsedEvidenceItems, setParsedEvidenceItems] = useState<ParsedEvidenceItem[]>([]);
+  const [isGeneratingDocuments, setIsGeneratingDocuments] = useState(false);
+  const [documentGenerationProgress, setDocumentGenerationProgress] = useState({ current: 0, total: 0 });
+  const [savedEvidences, setSavedEvidences] = useState<GeneratedEvidence[]>([]);
+  const [isLoadingEvidences, setIsLoadingEvidences] = useState(false);
+  const [evidenceViewModes, setEvidenceViewModes] = useState<Record<string, number>>({});
+  const [editingEvidenceContent, setEditingEvidenceContent] = useState<Record<string, string>>({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Hospital config for evidence generation
+  const nabhCoordinator = getNABHCoordinator();
+  const hospitalConfig = {
+    name: HOSPITAL_INFO.name,
+    address: HOSPITAL_INFO.address,
+    phone: HOSPITAL_INFO.phone,
+    email: HOSPITAL_INFO.email,
+    website: HOSPITAL_INFO.website,
+    qualityCoordinator: nabhCoordinator.name,
+    qualityCoordinatorDesignation: nabhCoordinator.designation,
+  };
+
   // Find chapter and objective
   const chapter = chapters.find((c) => c.id === chapterId);
   const objective = chapter?.objectives.find((o) => o.id === objectiveId);
@@ -99,6 +152,97 @@ export default function ObjectiveDetailPage() {
       setSelectedChapter(chapterId);
     }
   }, [chapterId, setSelectedChapter]);
+
+  // Load data from Supabase when page loads
+  useEffect(() => {
+    const loadFromSupabase = async () => {
+      if (!objective?.code) return;
+
+      setIsLoadingFromDb(true);
+      try {
+        const result = await loadObjectiveFromSupabase(objective.code);
+        if (result.success && result.data && chapter) {
+          // Merge Supabase data with local state
+          const updates: Partial<typeof objective> = {};
+
+          if (result.data.description) updates.description = result.data.description;
+          if (result.data.hindiExplanation) updates.hindiExplanation = result.data.hindiExplanation;
+          if (result.data.title) updates.title = result.data.title;
+          if (result.data.evidencesList) updates.evidencesList = result.data.evidencesList;
+          if (result.data.evidenceLinks) updates.evidenceLinks = result.data.evidenceLinks;
+          if (result.data.status) updates.status = result.data.status;
+          if (result.data.priority) updates.priority = result.data.priority;
+          if (result.data.assignee) updates.assignee = result.data.assignee;
+          if (result.data.startDate) updates.startDate = result.data.startDate;
+          if (result.data.endDate) updates.endDate = result.data.endDate;
+          if (result.data.deliverable) updates.deliverable = result.data.deliverable;
+          if (result.data.notes) updates.notes = result.data.notes;
+          if (result.data.infographicSvg) updates.infographicSvg = result.data.infographicSvg;
+          if (result.data.infographicDataUrl) updates.infographicDataUrl = result.data.infographicDataUrl;
+          if (result.data.evidenceFiles?.length) updates.evidenceFiles = result.data.evidenceFiles;
+          if (result.data.youtubeVideos?.length) updates.youtubeVideos = result.data.youtubeVideos;
+          if (result.data.trainingMaterials?.length) updates.trainingMaterials = result.data.trainingMaterials;
+          if (result.data.sopDocuments?.length) updates.sopDocuments = result.data.sopDocuments;
+
+          if (Object.keys(updates).length > 0) {
+            updateObjective(chapter.id, objective.id, updates);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load from Supabase:', error);
+      } finally {
+        setIsLoadingFromDb(false);
+      }
+    };
+
+    loadFromSupabase();
+  }, [objective?.code]); // Only reload when objective code changes
+
+  // Parse evidence list into checkable items when evidencesList changes
+  useEffect(() => {
+    if (!objective?.evidencesList) {
+      setParsedEvidenceItems([]);
+      return;
+    }
+
+    const lines = objective.evidencesList.split('\n').filter(line => line.trim());
+    const items: ParsedEvidenceItem[] = [];
+
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
+      // Match lines that start with numbers, bullets, or dashes
+      if (trimmed.match(/^(\d+[.):]|-|\*|•)/)) {
+        items.push({
+          id: `evidence-item-${index}`,
+          text: trimmed,
+          selected: false,
+        });
+      }
+    });
+
+    setParsedEvidenceItems(items);
+  }, [objective?.evidencesList]);
+
+  // Load saved evidences when objective changes
+  useEffect(() => {
+    const loadSavedEvidences = async () => {
+      if (!objective?.code) return;
+
+      setIsLoadingEvidences(true);
+      try {
+        const result = await loadGeneratedEvidences(objective.code);
+        if (result.success && result.data) {
+          setSavedEvidences(result.data);
+        }
+      } catch (error) {
+        console.warn('Could not load saved evidences:', error);
+      } finally {
+        setIsLoadingEvidences(false);
+      }
+    };
+
+    loadSavedEvidences();
+  }, [objective?.code]);
 
   if (!chapter || !objective) {
     return (
@@ -119,8 +263,48 @@ export default function ObjectiveDetailPage() {
     );
   }
 
+  // Save current objective to Supabase
+  const saveToSupabase = async (updatedObjective: typeof objective) => {
+    if (!chapter || !updatedObjective) return;
+
+    setSaveStatus('saving');
+    try {
+      const result = await saveObjectiveToSupabase(chapter.id, updatedObjective);
+      if (result.success) {
+        setSaveStatus('saved');
+        setLastSaved(new Date());
+        // Reset status after 3 seconds
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      } else {
+        console.error('Failed to save to Supabase:', result.error);
+        setSaveStatus('error');
+      }
+    } catch (error) {
+      console.error('Error saving to Supabase:', error);
+      setSaveStatus('error');
+    }
+  };
+
+  // Debounced save to Supabase
+  const debouncedSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleFieldChange = (field: string, value: string | Status | Priority | ElementCategory) => {
+    // Update local store immediately
     updateObjective(chapter.id, objective.id, { [field]: value });
+
+    // Debounce Supabase save (save after 1 second of no changes)
+    if (debouncedSaveRef.current) {
+      clearTimeout(debouncedSaveRef.current);
+    }
+
+    debouncedSaveRef.current = setTimeout(() => {
+      // Get the updated objective from store
+      const updatedChapter = chapters.find((c) => c.id === chapter.id);
+      const updatedObjective = updatedChapter?.objectives.find((o) => o.id === objective.id);
+      if (updatedObjective) {
+        saveToSupabase({ ...updatedObjective, [field]: value });
+      }
+    }, 1000);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,16 +323,24 @@ export default function ObjectiveDetailPage() {
     );
 
     const existingFiles = objective.evidenceFiles || [];
+    const updatedFiles = [...existingFiles, ...newFiles];
     updateObjective(chapter.id, objective.id, {
-      evidenceFiles: [...existingFiles, ...newFiles],
+      evidenceFiles: updatedFiles,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, evidenceFiles: updatedFiles });
   };
 
   const handleRemoveFile = (fileId: string) => {
     const existingFiles = objective.evidenceFiles || [];
+    const updatedFiles = existingFiles.filter((f) => f.id !== fileId);
     updateObjective(chapter.id, objective.id, {
-      evidenceFiles: existingFiles.filter((f) => f.id !== fileId),
+      evidenceFiles: updatedFiles,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, evidenceFiles: updatedFiles });
   };
 
   // YouTube Video functions
@@ -165,9 +357,13 @@ export default function ObjectiveDetailPage() {
     };
 
     const existingVideos = objective.youtubeVideos || [];
+    const updatedVideos = [...existingVideos, newVideo];
     updateObjective(chapter.id, objective.id, {
-      youtubeVideos: [...existingVideos, newVideo],
+      youtubeVideos: updatedVideos,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, youtubeVideos: updatedVideos });
 
     setNewVideoTitle('');
     setNewVideoUrl('');
@@ -177,9 +373,13 @@ export default function ObjectiveDetailPage() {
 
   const handleRemoveVideo = (videoId: string) => {
     const existingVideos = objective.youtubeVideos || [];
+    const updatedVideos = existingVideos.filter((v) => v.id !== videoId);
     updateObjective(chapter.id, objective.id, {
-      youtubeVideos: existingVideos.filter((v) => v.id !== videoId),
+      youtubeVideos: updatedVideos,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, youtubeVideos: updatedVideos });
   };
 
   // Training Material functions
@@ -200,9 +400,13 @@ export default function ObjectiveDetailPage() {
     };
 
     const existingMaterials = objective.trainingMaterials || [];
+    const updatedMaterials = [...existingMaterials, newMaterial];
     updateObjective(chapter.id, objective.id, {
-      trainingMaterials: [...existingMaterials, newMaterial],
+      trainingMaterials: updatedMaterials,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, trainingMaterials: updatedMaterials });
 
     setNewTrainingTitle('');
     setNewTrainingDescription('');
@@ -212,9 +416,13 @@ export default function ObjectiveDetailPage() {
 
   const handleRemoveTrainingMaterial = (materialId: string) => {
     const existingMaterials = objective.trainingMaterials || [];
+    const updatedMaterials = existingMaterials.filter((m) => m.id !== materialId);
     updateObjective(chapter.id, objective.id, {
-      trainingMaterials: existingMaterials.filter((m) => m.id !== materialId),
+      trainingMaterials: updatedMaterials,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, trainingMaterials: updatedMaterials });
   };
 
   // SOP functions
@@ -240,9 +448,13 @@ export default function ObjectiveDetailPage() {
     };
 
     const existingSOPs = objective.sopDocuments || [];
+    const updatedSOPs = [...existingSOPs, newSOP];
     updateObjective(chapter.id, objective.id, {
-      sopDocuments: [...existingSOPs, newSOP],
+      sopDocuments: updatedSOPs,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, sopDocuments: updatedSOPs });
 
     setNewSOPTitle('');
     setNewSOPVersion('1.0');
@@ -253,9 +465,13 @@ export default function ObjectiveDetailPage() {
 
   const handleRemoveSOP = (sopId: string) => {
     const existingSOPs = objective.sopDocuments || [];
+    const updatedSOPs = existingSOPs.filter((s) => s.id !== sopId);
     updateObjective(chapter.id, objective.id, {
-      sopDocuments: existingSOPs.filter((s) => s.id !== sopId),
+      sopDocuments: updatedSOPs,
     });
+
+    // Save to Supabase
+    saveToSupabase({ ...objective, sopDocuments: updatedSOPs });
   };
 
   // Generate SOP using AI
@@ -392,6 +608,463 @@ Format your response as a numbered list (1-10) with each evidence item on a new 
     }
   };
 
+  // Toggle evidence item selection
+  const handleToggleEvidenceItem = (id: string) => {
+    setParsedEvidenceItems(items =>
+      items.map(item =>
+        item.id === id ? { ...item, selected: !item.selected } : item
+      )
+    );
+  };
+
+  // Select/deselect all evidence items
+  const handleSelectAllEvidenceItems = () => {
+    const allSelected = parsedEvidenceItems.every(item => item.selected);
+    setParsedEvidenceItems(items =>
+      items.map(item => ({ ...item, selected: !allSelected }))
+    );
+  };
+
+  // Get formatted dates
+  const getFormattedDate = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const today = new Date();
+  const effectiveDate = getFormattedDate(today);
+  const reviewDate = getFormattedDate(new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()));
+
+  // Logo URL (use absolute URL for generated documents)
+  const logoUrl = `${window.location.origin}/hospital-logo.png`;
+
+  // Get the HTML template for evidence documents
+  const getEvidenceDocumentPrompt = () => `You are an expert in NABH (National Accreditation Board for Hospitals and Healthcare Providers) accreditation documentation for Dr. Murali's Hope Hospital.
+
+Generate a complete HTML document for the selected evidence item in ENGLISH ONLY (internal document).
+
+IMPORTANT: Generate the output as a complete, valid HTML document with embedded CSS styling. The document must be modern, professional, and print-ready.
+
+Use EXACTLY this HTML template structure (fill in the content sections):
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>[Document Title] - Dr. Murali's Hope Hospital</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo { width: 180px; height: auto; margin: 0 auto 10px; display: block; }
+    .tagline { font-size: 11px; color: #666; font-style: italic; margin-bottom: 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .info-table th, .info-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .info-table th { background: #f5f5f5; font-weight: 600; width: 25%; }
+    .auth-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .auth-table th { background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; padding: 10px; text-align: center; }
+    .auth-table td { border: 1px solid #ddd; padding: 15px; text-align: center; vertical-align: top; }
+    .signature-box { margin-top: 10px; padding: 8px; border: 1px solid #1565C0; border-radius: 5px; background: #f8f9fa; }
+    .signature-name { font-weight: bold; color: #1565C0; font-size: 14px; }
+    .signature-line { font-family: 'Brush Script MT', cursive; font-size: 18px; color: #0D47A1; margin: 5px 0; }
+    .section { margin: 20px 0; }
+    .section-title { background: #e3f2fd; padding: 8px 12px; font-weight: bold; color: #1565C0; border-left: 4px solid #1565C0; margin-bottom: 10px; }
+    .section-content { padding: 10px 15px; }
+    .section-content ul { margin-left: 20px; }
+    .section-content li { margin: 5px 0; }
+    .procedure-step { margin: 10px 0; padding: 10px; background: #fafafa; border-radius: 5px; border-left: 3px solid #1565C0; }
+    .step-number { display: inline-block; width: 25px; height: 25px; background: #1565C0; color: white; border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; }
+    .data-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    .data-table th { background: #1565C0; color: white; padding: 10px; text-align: left; }
+    .data-table td { border: 1px solid #ddd; padding: 8px; }
+    .data-table tr:nth-child(even) { background: #f9f9f9; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
+    .revision-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px; }
+    .revision-table th { background: #455a64; color: white; padding: 8px; }
+    .revision-table td { border: 1px solid #ddd; padding: 8px; }
+    .stamp-area { border: 2px solid #1565C0; border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0; background: #f8f9fa; }
+    .stamp-text { font-weight: bold; color: #1565C0; font-size: 14px; }
+    @media print { body { padding: 0; } .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${logoUrl}" alt="Dr. Murali's Hope Hospital" class="logo" onerror="this.style.display='none'">
+    <div class="tagline">Assured | Committed | Proficient</div>
+    <div class="hospital-address">${hospitalConfig.address} | Phone: ${hospitalConfig.phone}</div>
+  </div>
+
+  <div class="doc-title">[DOCUMENT TITLE - Replace with appropriate title]</div>
+
+  <table class="info-table">
+    <tr><th>Document No</th><td>[Generate appropriate doc number like POL-QMS-001, SOP-AAC-001, etc.]</td><th>Version</th><td>1.0</td></tr>
+    <tr><th>Department</th><td>[Appropriate department]</td><th>Category</th><td>[Policy/SOP/Record/Format]</td></tr>
+    <tr><th>Effective Date</th><td>${effectiveDate}</td><th>Review Date</th><td>${reviewDate}</td></tr>
+  </table>
+
+  <table class="auth-table">
+    <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
+    <tr>
+      <td>
+        <div class="signature-box">
+          <div class="signature-name">Jagruti</div>
+          <div>Quality Manager / HR</div>
+          <div>Date: ${effectiveDate}</div>
+          <div class="signature-line">Jagruti</div>
+        </div>
+      </td>
+      <td>
+        <div class="signature-box">
+          <div class="signature-name">Gaurav</div>
+          <div>Hospital Administrator</div>
+          <div>Date: ${effectiveDate}</div>
+          <div class="signature-line">Gaurav</div>
+        </div>
+      </td>
+      <td>
+        <div class="signature-box">
+          <div class="signature-name">Dr. Shiraz Sheikh</div>
+          <div>NABH Coordinator / Administrator</div>
+          <div>Date: ${effectiveDate}</div>
+          <div class="signature-line">Dr. Shiraz Sheikh</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  [MAIN CONTENT - Generate detailed content using sections below]
+
+  <div class="section">
+    <div class="section-title">1. Purpose</div>
+    <div class="section-content">[Purpose of this document]</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2. Scope</div>
+    <div class="section-content">[Scope and applicability]</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">3. Responsibilities</div>
+    <div class="section-content">[Who is responsible for what]</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">4. Procedure / Policy</div>
+    <div class="section-content">[Detailed procedure or policy content]</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">5. Documentation</div>
+    <div class="section-content">[Related forms, records, registers]</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">6. References</div>
+    <div class="section-content">NABH SHCO 3rd Edition Standards</div>
+  </div>
+
+  <table class="revision-table">
+    <tr><th>Version</th><th>Date</th><th>Description</th><th>Changed By</th></tr>
+    <tr><td>1.0</td><td>${effectiveDate}</td><td>Initial Release</td><td>Quality Department</td></tr>
+  </table>
+
+  <div class="stamp-area">
+    <div class="stamp-text">DR. MURALI'S HOPE HOSPITAL</div>
+    <div>QUALITY MANAGEMENT SYSTEM</div>
+    <div style="margin-top: 5px; font-size: 10px;">Controlled Document</div>
+  </div>
+
+  <div class="footer">
+    <strong>Dr. Murali's Hope Hospital</strong> | ${hospitalConfig.address}<br>
+    Phone: ${hospitalConfig.phone} | Email: ${hospitalConfig.email} | Website: ${hospitalConfig.website}<br>
+    This is a controlled document. Unauthorized copying or distribution is prohibited.
+  </div>
+</body>
+</html>
+
+Generate the complete HTML with all sections filled in appropriately based on the evidence item provided. Make the content detailed, practical, and ready for NABH assessment.`;
+
+  // Extract HTML from AI response (handles markdown code blocks)
+  const extractHTMLFromResponse = (response: string): string => {
+    let content = response.trim();
+
+    // Remove markdown code blocks if present
+    const htmlCodeBlockMatch = content.match(/```html\s*([\s\S]*?)```/i);
+    if (htmlCodeBlockMatch) {
+      content = htmlCodeBlockMatch[1].trim();
+    } else {
+      // Try generic code block
+      const codeBlockMatch = content.match(/```\s*([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        content = codeBlockMatch[1].trim();
+      }
+    }
+
+    // If content starts with DOCTYPE or html tag, return as-is
+    if (content.startsWith('<!DOCTYPE') || content.startsWith('<html')) {
+      return content;
+    }
+
+    // Try to find HTML document in the response
+    const doctypeIndex = content.indexOf('<!DOCTYPE html>');
+    if (doctypeIndex !== -1) {
+      return content.substring(doctypeIndex);
+    }
+
+    const htmlIndex = content.indexOf('<html');
+    if (htmlIndex !== -1) {
+      return content.substring(htmlIndex);
+    }
+
+    // If no proper HTML found, wrap in basic structure with logo
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Evidence Document - Dr. Murali's Hope Hospital</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo { width: 180px; height: auto; margin: 0 auto 10px; display: block; }
+    .tagline { font-size: 11px; color: #666; font-style: italic; margin-bottom: 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .content { padding: 20px 0; white-space: pre-wrap; line-height: 1.8; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${logoUrl}" alt="Dr. Murali's Hope Hospital" class="logo" onerror="this.style.display='none'">
+    <div class="tagline">Assured | Committed | Proficient</div>
+    <div class="hospital-address">${hospitalConfig.address} | Phone: ${hospitalConfig.phone}</div>
+  </div>
+  <div class="content">${content}</div>
+  <div class="footer">
+    <strong>Dr. Murali's Hope Hospital</strong> | ${hospitalConfig.address}<br>
+    Phone: ${hospitalConfig.phone} | Email: ${hospitalConfig.email}
+  </div>
+</body>
+</html>`;
+  };
+
+  // Extract editable text from HTML content
+  const extractTextFromHTML = (html: string): string => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    // Remove script and style elements
+    const scripts = tempDiv.querySelectorAll('script, style');
+    scripts.forEach(el => el.remove());
+
+    const sections: string[] = [];
+
+    // Extract title
+    const title = tempDiv.querySelector('.doc-title, h1, title');
+    if (title) {
+      sections.push(`TITLE: ${title.textContent?.trim() || ''}`);
+      sections.push('');
+    }
+
+    // Extract sections
+    const sectionElements = tempDiv.querySelectorAll('.section');
+    sectionElements.forEach(section => {
+      const sectionTitle = section.querySelector('.section-title');
+      const sectionContent = section.querySelector('.section-content');
+
+      if (sectionTitle) {
+        sections.push(`## ${sectionTitle.textContent?.trim()}`);
+      }
+      if (sectionContent) {
+        sections.push(sectionContent.textContent?.trim() || '');
+      }
+      sections.push('');
+    });
+
+    // If no structured content found, get all text
+    if (sections.length < 3) {
+      return tempDiv.textContent?.trim() || html;
+    }
+
+    return sections.join('\n');
+  };
+
+  // Generate evidence documents for selected items
+  const handleGenerateEvidenceDocuments = async () => {
+    const selectedItems = parsedEvidenceItems.filter(item => item.selected);
+    if (selectedItems.length === 0) return;
+
+    setIsGeneratingDocuments(true);
+    setDocumentGenerationProgress({ current: 0, total: selectedItems.length });
+
+    const geminiApiKey = getGeminiApiKey();
+    const claudeApiKey = getClaudeApiKey();
+    const contentPrompt = getEvidenceDocumentPrompt();
+
+    for (let i = 0; i < selectedItems.length; i++) {
+      const item = selectedItems[i];
+      setDocumentGenerationProgress({ current: i + 1, total: selectedItems.length });
+
+      const userMessage = `Objective Element: ${objective?.description}
+
+Evidence Item to Generate:
+${item.text}
+
+Generate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
+
+      try {
+        let rawContent: string = '';
+
+        // Try Gemini first, fallback to Claude
+        if (geminiApiKey) {
+          try {
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: `${contentPrompt}\n\n${userMessage}` }] }],
+                  generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                }),
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            }
+          } catch (geminiErr) {
+            console.warn('Gemini failed:', geminiErr);
+          }
+        }
+
+        if (!rawContent && claudeApiKey) {
+          const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': claudeApiKey,
+              'anthropic-version': '2023-06-01',
+              'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 4096,
+              messages: [{ role: 'user', content: `${contentPrompt}\n\n${userMessage}` }],
+            }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            rawContent = data.content?.[0]?.text || '';
+          }
+        }
+
+        if (rawContent) {
+          // Extract clean HTML from response
+          const htmlContent = extractHTMLFromResponse(rawContent);
+
+          // Extract title from the evidence item
+          const title = item.text.replace(/^\d+[.):]\s*/, '').substring(0, 100);
+
+          // Save to Supabase
+          const result = await saveGeneratedEvidence({
+            objective_code: objective?.code || '',
+            evidence_title: title,
+            prompt: item.text,
+            generated_content: extractTextFromHTML(htmlContent),
+            html_content: htmlContent,
+            evidence_type: 'document',
+            hospital_config: hospitalConfig,
+          });
+
+          if (result.success && result.id) {
+            // Add to local state
+            const newEvidence: GeneratedEvidence = {
+              id: result.id,
+              objective_code: objective?.code || '',
+              evidence_title: title,
+              prompt: item.text,
+              generated_content: extractTextFromHTML(htmlContent),
+              html_content: htmlContent,
+              evidence_type: 'document',
+              hospital_config: hospitalConfig,
+              created_at: new Date().toISOString(),
+            };
+            setSavedEvidences(prev => [newEvidence, ...prev]);
+            setSnackbarMessage(`Generated: ${title.substring(0, 50)}...`);
+            setSnackbarOpen(true);
+          } else {
+            console.error('Failed to save evidence:', result.error);
+            setSnackbarMessage('Failed to save evidence. Check console for details.');
+            setSnackbarOpen(true);
+          }
+        } else {
+          console.error('No content generated for:', item.text);
+          setSnackbarMessage('Failed to generate content. Check API keys.');
+          setSnackbarOpen(true);
+        }
+      } catch (error) {
+        console.error('Error generating evidence document:', error);
+        setSnackbarMessage('Error generating document. Check console.');
+        setSnackbarOpen(true);
+      }
+    }
+
+    setIsGeneratingDocuments(false);
+    // Deselect all items after generation
+    setParsedEvidenceItems(items => items.map(item => ({ ...item, selected: false })));
+  };
+
+  // Copy share link to clipboard
+  const handleCopyShareLink = (evidenceId: string) => {
+    const shareUrl = `${window.location.origin}/evidence/${evidenceId}`;
+    navigator.clipboard.writeText(shareUrl);
+    setSnackbarMessage('Share link copied to clipboard');
+    setSnackbarOpen(true);
+  };
+
+  // Handle edit mode content change
+  const handleEditContent = (evidenceId: string, content: string) => {
+    setEditingEvidenceContent(prev => ({ ...prev, [evidenceId]: content }));
+  };
+
+
+  // Delete evidence
+  const handleDeleteEvidence = async (evidenceId: string) => {
+    const result = await deleteGeneratedEvidence(evidenceId);
+    if (result.success) {
+      setSavedEvidences(prev => prev.filter(ev => ev.id !== evidenceId));
+      setSnackbarMessage('Evidence deleted');
+      setSnackbarOpen(true);
+    }
+  };
+
+  // Preview evidence in new window
+  const handlePreviewEvidence = (content: string, _title: string) => {
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      previewWindow.document.write(content);
+      previewWindow.document.close();
+    }
+  };
+
+  // Print evidence
+  const handlePrintEvidence = (content: string) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(content);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const selectedEvidenceCount = parsedEvidenceItems.filter(item => item.selected).length;
+
   // Generate Hindi explanation based on interpretation
   const handleGenerateHindiExplanation = async (interpretation: string) => {
     if (!interpretation.trim()) return;
@@ -439,6 +1112,9 @@ Provide only the Hindi explanation, no English text. The explanation should be c
 
       if (hindiContent.trim()) {
         updateObjective(chapter.id, objective.id, { hindiExplanation: hindiContent.trim() });
+
+        // Save to Supabase
+        saveToSupabase({ ...objective, hindiExplanation: hindiContent.trim() });
       }
     } catch (error) {
       console.error('Error generating Hindi explanation:', error);
@@ -457,6 +1133,200 @@ Provide only the Hindi explanation, no English text. The explanation should be c
     if (objective.description && objective.description.trim()) {
       await handleGenerateHindiExplanation(objective.description);
     }
+  };
+
+  // Save infographic to Supabase using the objective_edits table
+  const saveInfographicToSupabase = async (imageDataUrl: string) => {
+    setInfographicSaveStatus('saving');
+    try {
+      // Save to nabh_objective_edits table (which exists)
+      const result = await saveObjectiveToSupabase(chapter.id, {
+        ...objective,
+        infographicSvg: '', // We're using image now, not SVG
+        infographicDataUrl: imageDataUrl,
+      });
+
+      if (result.success) {
+        setInfographicSaveStatus('saved');
+        setLastSaved(new Date());
+        return true;
+      } else {
+        console.warn('Infographic not saved to Supabase:', result.error);
+        setInfographicSaveStatus('error');
+        return false;
+      }
+    } catch (error) {
+      console.warn('Infographic storage to Supabase failed:', error);
+      setInfographicSaveStatus('error');
+      return false;
+    }
+  };
+
+  // Generate Bilingual Infographic using Gemini Image Generation
+  const handleGenerateInfographic = async () => {
+    if (!objective.description) return;
+
+    setIsGeneratingInfographic(true);
+    setGeneratedInfographicSvg('');
+
+    try {
+      const apiKey = getGeminiApiKey();
+      if (!apiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+
+      // Create the prompt for infographic generation
+      const prompt = `Create a professional bilingual healthcare infographic poster for hospital display.
+
+TITLE: ${objective.code} - NABH Accreditation Standard
+${objective.isCore ? 'CORE ELEMENT - Critical for Patient Safety' : ''}
+
+ENGLISH SECTION:
+${objective.description}
+
+HINDI SECTION (हिंदी):
+${objective.hindiExplanation || 'हिंदी व्याख्या उपलब्ध नहीं है'}
+
+HOSPITAL: ${HOSPITAL_INFO.name}
+
+DESIGN REQUIREMENTS:
+- Portrait orientation (suitable for A4/A3 printing)
+- Professional healthcare color scheme (blue #1565C0, white background, red #D32F2F accent)
+- Hospital name at the top with medical cross symbol
+- Objective code prominently displayed
+- Split layout: English on left/top, Hindi on right/bottom
+- 3-5 key compliance points with checkmark icons
+- Healthcare icons (stethoscope, heart, shield, medical cross)
+- Footer: "NABH Accreditation Compliance"
+- Clean, professional, easy to read from distance
+- Include visual hierarchy with headers and bullet points`;
+
+      // Use Gemini 3.0 Pro Image (Nano Banana Pro) for generation
+      // API reference: https://ai.google.dev/gemini-api/docs/image-generation
+      // Model: gemini-3-pro-image-preview (Nano Banana Pro - professional image generation)
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: `Generate an infographic image: ${prompt}` }
+                ]
+              }
+            ],
+            generationConfig: {
+              responseModalities: ['TEXT', 'IMAGE'],
+            }
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Gemini API error:', errorData);
+        throw new Error(errorData.error?.message || 'Failed to generate infographic');
+      }
+
+      const data = await response.json();
+      console.log('Gemini API Response:', JSON.stringify(data, null, 2));
+
+      // Extract image from response
+      let imageDataUrl = '';
+      let textContent = '';
+      const candidate = data.candidates?.[0];
+
+      if (candidate?.content?.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData) {
+            const mimeType = part.inlineData.mimeType || 'image/png';
+            const base64Data = part.inlineData.data;
+            console.log('Base64 data length:', base64Data?.length);
+            console.log('Base64 first 100 chars:', base64Data?.substring(0, 100));
+            console.log('Base64 last 100 chars:', base64Data?.substring(base64Data.length - 100));
+            imageDataUrl = `data:${mimeType};base64,${base64Data}`;
+            console.log('Found image in response, mimeType:', mimeType);
+            console.log('Image data URL length:', imageDataUrl.length);
+          }
+          if (part.text) {
+            textContent = part.text;
+            console.log('Found text in response:', textContent.substring(0, 200));
+          }
+        }
+      }
+
+      if (imageDataUrl) {
+        console.log('Using generated image, data URL length:', imageDataUrl.length);
+        console.log('Setting state with image...');
+        setGeneratedInfographicSvg(imageDataUrl);
+        console.log('State set successfully');
+
+        // Update objective with infographic (local storage)
+        updateObjective(chapter.id, objective.id, {
+          infographicSvg: '',
+          infographicDataUrl: imageDataUrl,
+        });
+
+        // Save to Supabase for persistence
+        await saveInfographicToSupabase(imageDataUrl);
+      } else {
+        // No image was generated - show error with details
+        const errorMsg = textContent
+          ? `Gemini returned text instead of image. Model may not support image generation. Response: ${textContent.substring(0, 100)}...`
+          : 'No image generated. The model may not support image generation with current settings.';
+        console.error(errorMsg);
+        console.error('Full response:', data);
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error generating infographic:', error);
+      setGeneratedInfographicSvg(''); // Clear on error
+      alert(`Failed to generate infographic: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingInfographic(false);
+    }
+  };
+
+  // Download infographic as PNG
+  const handleDownloadInfographic = () => {
+    const imageUrl = generatedInfographicSvg || objective.infographicDataUrl;
+    if (!imageUrl) return;
+
+    // If it's already a data URL (base64 image), download directly
+    if (imageUrl.startsWith('data:image/')) {
+      const link = document.createElement('a');
+      link.download = `${objective.code}-infographic.png`;
+      link.href = imageUrl;
+      link.click();
+      return;
+    }
+
+    // If it's SVG (legacy), convert to PNG
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    const svgBlob = new Blob([imageUrl], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      canvas.width = img.width || 800;
+      canvas.height = img.height || 1000;
+      ctx?.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `${objective.code}-infographic.png`;
+      link.href = pngUrl;
+      link.click();
+    };
+
+    img.src = url;
   };
 
   const evidenceFiles = objective.evidenceFiles || [];
@@ -517,6 +1387,46 @@ Provide only the Hindi explanation, no English text. The explanation should be c
               <Chip label="Prev NC" size="medium" color="warning" />
             )}
             <Chip label={objective.category} size="medium" variant="outlined" />
+          </Box>
+          {/* Save Status Indicator */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isLoadingFromDb && (
+              <Chip
+                icon={<CircularProgress size={14} />}
+                label="Loading..."
+                size="small"
+                color="default"
+              />
+            )}
+            {saveStatus === 'saving' && (
+              <Chip
+                icon={<CircularProgress size={14} />}
+                label="Saving..."
+                size="small"
+                color="info"
+              />
+            )}
+            {saveStatus === 'saved' && (
+              <Chip
+                icon={<Icon sx={{ fontSize: 16 }}>cloud_done</Icon>}
+                label="Saved"
+                size="small"
+                color="success"
+              />
+            )}
+            {saveStatus === 'error' && (
+              <Chip
+                icon={<Icon sx={{ fontSize: 16 }}>cloud_off</Icon>}
+                label="Save failed"
+                size="small"
+                color="error"
+              />
+            )}
+            {lastSaved && saveStatus === 'idle' && (
+              <Typography variant="caption" color="text.secondary">
+                Last saved: {lastSaved.toLocaleTimeString()}
+              </Typography>
+            )}
           </Box>
         </Box>
         <Typography variant="body1" color="text.secondary">
@@ -608,6 +1518,121 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                     No Hindi explanation available. Click the button above to generate one from the interpretation.
                   </Typography>
                 </Alert>
+              )}
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Bilingual Infographic Section */}
+          <Accordion sx={{ bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
+            <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon color="info">image</Icon>
+                <Typography fontWeight={600}>Bilingual Infographic (English + Hindi)</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  Generate a professional bilingual infographic for display in hospital areas. The infographic includes both English and Hindi content based on the interpretation.
+                </Typography>
+              </Alert>
+              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Button
+                  variant="contained"
+                  color="info"
+                  startIcon={isGeneratingInfographic ? <CircularProgress size={16} color="inherit" /> : <Icon>auto_awesome</Icon>}
+                  onClick={handleGenerateInfographic}
+                  disabled={isGeneratingInfographic || !objective.description}
+                >
+                  {isGeneratingInfographic ? 'Generating Infographic...' : 'Generate Infographic'}
+                </Button>
+                {(generatedInfographicSvg || objective.infographicDataUrl) && (
+                  <Button
+                    variant="outlined"
+                    color="info"
+                    startIcon={<Icon>download</Icon>}
+                    onClick={handleDownloadInfographic}
+                  >
+                    Download as PNG
+                  </Button>
+                )}
+                {infographicSaveStatus === 'saving' && (
+                  <Chip
+                    icon={<CircularProgress size={14} />}
+                    label="Saving to cloud..."
+                    size="small"
+                    color="default"
+                  />
+                )}
+                {infographicSaveStatus === 'saved' && (
+                  <Chip
+                    icon={<Icon sx={{ fontSize: 16 }}>cloud_done</Icon>}
+                    label="Saved to Supabase"
+                    size="small"
+                    color="success"
+                  />
+                )}
+                {infographicSaveStatus === 'error' && (
+                  <Chip
+                    icon={<Icon sx={{ fontSize: 16 }}>cloud_off</Icon>}
+                    label="Save failed (stored locally)"
+                    size="small"
+                    color="warning"
+                  />
+                )}
+              </Box>
+
+              {/* Display generated or saved infographic */}
+              {(generatedInfographicSvg || objective.infographicDataUrl) && (
+                <Box
+                  sx={{
+                    border: '2px solid',
+                    borderColor: 'info.200',
+                    borderRadius: 2,
+                    p: 2,
+                    bgcolor: 'background.paper',
+                    overflow: 'auto',
+                    maxHeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  <img
+                    src={generatedInfographicSvg || objective.infographicDataUrl}
+                    alt={`${objective.code} Infographic`}
+                    style={{
+                      maxWidth: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto',
+                      borderRadius: '8px',
+                    }}
+                    onError={(e) => {
+                      console.error('Image failed to load:', e);
+                      console.log('Image src length:', (generatedInfographicSvg || objective.infographicDataUrl || '').length);
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully');
+                    }}
+                  />
+                </Box>
+              )}
+
+              {!generatedInfographicSvg && !objective.infographicDataUrl && (
+                <Box
+                  sx={{
+                    border: '2px dashed',
+                    borderColor: 'grey.300',
+                    borderRadius: 2,
+                    p: 4,
+                    textAlign: 'center',
+                    bgcolor: 'grey.50',
+                  }}
+                >
+                  <Icon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }}>image</Icon>
+                  <Typography color="text.secondary">
+                    Click "Generate Infographic" to create a bilingual visual for this objective
+                  </Typography>
+                </Box>
               )}
             </AccordionDetails>
           </Accordion>
@@ -748,6 +1773,426 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             sx={expandableTextFieldSx}
             helperText="List evidences in order of priority. Use AI generator above to auto-generate."
           />
+
+          {/* Evidence Document Generator */}
+          {parsedEvidenceItems.length > 0 && (
+            <Accordion defaultExpanded sx={{ bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
+              <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Icon color="success">description</Icon>
+                  <Typography fontWeight={600}>Generate Evidence Documents</Typography>
+                  {selectedEvidenceCount > 0 && (
+                    <Chip
+                      label={`${selectedEvidenceCount} selected`}
+                      size="small"
+                      color="success"
+                    />
+                  )}
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mb: 2 }}>
+                  <Typography variant="body2">
+                    Select evidence items below and click "Generate Documents" to create professional,
+                    hospital-branded evidence documents. Each document will be saved with a shareable link.
+                  </Typography>
+                </Alert>
+
+                {/* Select All / Generate Buttons */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Button
+                    size="small"
+                    startIcon={<Icon>select_all</Icon>}
+                    onClick={handleSelectAllEvidenceItems}
+                  >
+                    {parsedEvidenceItems.every(item => item.selected) ? 'Deselect All' : 'Select All'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={isGeneratingDocuments ? <CircularProgress size={20} color="inherit" /> : <Icon>auto_awesome</Icon>}
+                    onClick={handleGenerateEvidenceDocuments}
+                    disabled={isGeneratingDocuments || selectedEvidenceCount === 0}
+                  >
+                    {isGeneratingDocuments
+                      ? `Generating ${documentGenerationProgress.current}/${documentGenerationProgress.total}...`
+                      : `Generate Documents (${selectedEvidenceCount})`}
+                  </Button>
+                </Box>
+
+                {/* Evidence Items Checklist */}
+                <Paper variant="outlined" sx={{ p: 2, maxHeight: 300, overflow: 'auto', bgcolor: 'background.paper' }}>
+                  <FormGroup>
+                    {parsedEvidenceItems.map((item) => (
+                      <FormControlLabel
+                        key={item.id}
+                        control={
+                          <Checkbox
+                            checked={item.selected}
+                            onChange={() => handleToggleEvidenceItem(item.id)}
+                            color="success"
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                            {item.text}
+                          </Typography>
+                        }
+                        sx={{
+                          alignItems: 'flex-start',
+                          mb: 1,
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: item.selected ? 'success.50' : 'transparent',
+                          '&:hover': { bgcolor: item.selected ? 'success.100' : 'grey.100' },
+                        }}
+                      />
+                    ))}
+                  </FormGroup>
+                </Paper>
+              </AccordionDetails>
+            </Accordion>
+          )}
+
+          {/* Generated Evidences Section */}
+          {(savedEvidences.length > 0 || isLoadingEvidences) && (
+            <Accordion defaultExpanded sx={{ bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
+              <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Icon color="info">folder_open</Icon>
+                  <Typography fontWeight={600}>Generated Evidence Documents</Typography>
+                  <Chip
+                    label={savedEvidences.length}
+                    size="small"
+                    color="info"
+                  />
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {isLoadingEvidences ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress size={32} />
+                    <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                      Loading saved evidences...
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {savedEvidences.map((evidence) => (
+                      <Card key={evidence.id} variant="outlined" sx={{ overflow: 'visible' }}>
+                        <CardContent sx={{ pb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Icon color="info">description</Icon>
+                              <Typography variant="subtitle1" fontWeight={600}>
+                                {evidence.evidence_title}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                size="small"
+                                label={`ID: ${evidence.id.substring(0, 8)}...`}
+                                variant="outlined"
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {new Date(evidence.created_at).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* View Mode Tabs */}
+                          <Tabs
+                            value={evidenceViewModes[evidence.id] || 0}
+                            onChange={(_, newValue) => setEvidenceViewModes(prev => ({ ...prev, [evidence.id]: newValue }))}
+                            sx={{ minHeight: 40, mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                          >
+                            <Tab
+                              icon={<Icon sx={{ fontSize: 20 }}>visibility</Icon>}
+                              iconPosition="start"
+                              label="Preview"
+                              sx={{ minHeight: 40, py: 1 }}
+                            />
+                            <Tab
+                              icon={<Icon sx={{ fontSize: 20 }}>text_fields</Icon>}
+                              iconPosition="start"
+                              label="Edit Text"
+                              sx={{ minHeight: 40, py: 1 }}
+                            />
+                            <Tab
+                              icon={<Icon sx={{ fontSize: 20 }}>code</Icon>}
+                              iconPosition="start"
+                              label="Edit HTML"
+                              sx={{ minHeight: 40, py: 1 }}
+                            />
+                          </Tabs>
+
+                          {/* Preview Mode */}
+                          {(evidenceViewModes[evidence.id] || 0) === 0 && (
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                bgcolor: 'white',
+                                overflow: 'hidden',
+                                minHeight: 500,
+                              }}
+                            >
+                              {evidence.html_content ? (
+                                <iframe
+                                  srcDoc={evidence.html_content}
+                                  title={evidence.evidence_title}
+                                  sandbox="allow-same-origin allow-scripts"
+                                  style={{
+                                    width: '100%',
+                                    height: '600px',
+                                    border: 'none',
+                                    display: 'block',
+                                    backgroundColor: 'white',
+                                  }}
+                                />
+                              ) : (
+                                <Box sx={{ p: 4, textAlign: 'center' }}>
+                                  <Icon sx={{ fontSize: 48, color: 'grey.400' }}>error_outline</Icon>
+                                  <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                    No content available
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Paper>
+                          )}
+
+                          {/* Edit Text Mode */}
+                          {(evidenceViewModes[evidence.id] || 0) === 1 && (
+                            <Box>
+                              <Alert severity="info" icon={<Icon>info</Icon>} sx={{ mb: 2 }}>
+                                <Typography variant="body2">
+                                  Edit the text content below. Changes will update the HTML document.
+                                </Typography>
+                              </Alert>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={15}
+                                maxRows={30}
+                                value={editingEvidenceContent[evidence.id] ?? (evidence.generated_content || extractTextFromHTML(evidence.html_content))}
+                                onChange={(e) => handleEditContent(evidence.id, e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+                                    fontSize: '0.875rem',
+                                    lineHeight: 1.6,
+                                  },
+                                }}
+                                placeholder="Edit document text content..."
+                              />
+                              {editingEvidenceContent[evidence.id] !== undefined && editingEvidenceContent[evidence.id] !== (evidence.generated_content || extractTextFromHTML(evidence.html_content)) && (
+                                <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={() => {
+                                      setEditingEvidenceContent(prev => {
+                                        const next = { ...prev };
+                                        delete next[evidence.id];
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<Icon>save</Icon>}
+                                    onClick={async () => {
+                                      const newText = editingEvidenceContent[evidence.id];
+                                      // Update both generated_content and regenerate simple HTML
+                                      const simpleHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${evidence.evidence_title} - ${hospitalConfig.name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+    .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; margin: 10px 0 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: #1565C0; color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
+    .content { padding: 20px 0; white-space: pre-wrap; line-height: 1.8; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="hospital-name">${hospitalConfig.name}</div>
+    <div class="hospital-address">${hospitalConfig.address}</div>
+  </div>
+  <div class="doc-title">${evidence.evidence_title}</div>
+  <div class="content">${newText}</div>
+  <div class="footer">
+    <strong>${hospitalConfig.name}</strong> | ${hospitalConfig.address}<br>
+    Phone: ${hospitalConfig.phone} | Email: ${hospitalConfig.email}
+  </div>
+</body>
+</html>`;
+                                      const result = await updateGeneratedEvidence(evidence.id, {
+                                        generated_content: newText,
+                                        html_content: simpleHtml,
+                                      });
+                                      if (result.success) {
+                                        setSavedEvidences(prev =>
+                                          prev.map(ev =>
+                                            ev.id === evidence.id
+                                              ? { ...ev, generated_content: newText, html_content: simpleHtml }
+                                              : ev
+                                          )
+                                        );
+                                        setSnackbarMessage('Evidence updated successfully');
+                                        setSnackbarOpen(true);
+                                        setEditingEvidenceContent(prev => {
+                                          const next = { ...prev };
+                                          delete next[evidence.id];
+                                          return next;
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    Save Changes
+                                  </Button>
+                                </Box>
+                              )}
+                            </Box>
+                          )}
+
+                          {/* Edit HTML Mode */}
+                          {(evidenceViewModes[evidence.id] || 0) === 2 && (
+                            <Box>
+                              <Alert severity="warning" icon={<Icon>code</Icon>} sx={{ mb: 2 }}>
+                                <Typography variant="body2">
+                                  Advanced: Edit the raw HTML code directly. Be careful with syntax.
+                                </Typography>
+                              </Alert>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={15}
+                                maxRows={30}
+                                value={editingEvidenceContent[`html-${evidence.id}`] ?? evidence.html_content}
+                                onChange={(e) => handleEditContent(`html-${evidence.id}`, e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.75rem',
+                                    lineHeight: 1.4,
+                                    bgcolor: '#1e1e1e',
+                                    color: '#d4d4d4',
+                                  },
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'grey.700',
+                                  },
+                                }}
+                                placeholder="Edit HTML content..."
+                              />
+                              {editingEvidenceContent[`html-${evidence.id}`] && editingEvidenceContent[`html-${evidence.id}`] !== evidence.html_content && (
+                                <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={() => {
+                                      setEditingEvidenceContent(prev => {
+                                        const next = { ...prev };
+                                        delete next[`html-${evidence.id}`];
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="warning"
+                                    startIcon={<Icon>save</Icon>}
+                                    onClick={async () => {
+                                      const newHtml = editingEvidenceContent[`html-${evidence.id}`];
+                                      const result = await updateGeneratedEvidence(evidence.id, { html_content: newHtml });
+                                      if (result.success) {
+                                        setSavedEvidences(prev =>
+                                          prev.map(ev => (ev.id === evidence.id ? { ...ev, html_content: newHtml } : ev))
+                                        );
+                                        setSnackbarMessage('HTML updated successfully');
+                                        setSnackbarOpen(true);
+                                        setEditingEvidenceContent(prev => {
+                                          const next = { ...prev };
+                                          delete next[`html-${evidence.id}`];
+                                          return next;
+                                        });
+                                        setEvidenceViewModes(prev => ({ ...prev, [evidence.id]: 0 }));
+                                      }
+                                    }}
+                                  >
+                                    Save HTML
+                                  </Button>
+                                </Box>
+                              )}
+                            </Box>
+                          )}
+                        </CardContent>
+                        <Divider />
+                        <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Tooltip title="Open in New Window">
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Icon>open_in_new</Icon>}
+                                onClick={() => handlePreviewEvidence(evidence.html_content, evidence.evidence_title)}
+                              >
+                                Open
+                              </Button>
+                            </Tooltip>
+                            <Tooltip title="Print Document">
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Icon>print</Icon>}
+                                onClick={() => handlePrintEvidence(evidence.html_content)}
+                              >
+                                Print
+                              </Button>
+                            </Tooltip>
+                            <Tooltip title="Delete Document">
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<Icon>delete</Icon>}
+                                onClick={() => handleDeleteEvidence(evidence.id)}
+                              >
+                                Delete
+                              </Button>
+                            </Tooltip>
+                          </Box>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Icon>share</Icon>}
+                            onClick={() => handleCopyShareLink(evidence.id)}
+                          >
+                            Copy Share Link
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    ))}
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          )}
+
           <TextField
             fullWidth
             label="Evidence Links"
@@ -1301,6 +2746,15 @@ Provide only the Hindi explanation, no English text. The explanation should be c
           />
         </Box>
       </Paper>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   );
 }

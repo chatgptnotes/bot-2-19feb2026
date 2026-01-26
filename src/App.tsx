@@ -11,6 +11,7 @@ import ObjectiveList from './components/ObjectiveList';
 import ObjectiveDetailPage from './components/ObjectiveDetailPage';
 import AIEvidenceGenerator from './components/AIEvidenceGenerator';
 import LandingPage from './components/LandingPage';
+import SharedEvidencePage from './components/SharedEvidencePage';
 import Footer from './components/Footer';
 import { useNABHStore } from './store/nabhStore';
 
@@ -300,6 +301,7 @@ function App() {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
+          <Route path="/evidence/:evidenceId" element={<SharedEvidencePage />} />
           <Route path="/objective/:chapterId/:objectiveId" element={<AppContent />} />
           <Route path="/*" element={<AppContent />} />
         </Routes>
