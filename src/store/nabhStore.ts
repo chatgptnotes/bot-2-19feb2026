@@ -246,7 +246,7 @@ export const useNABHStore = create<NABHStore>()(
                 const objective: ObjectiveElement = {
                   id: element.id,
                   code: `${nabhChapter.name}.${standard.standard_number}.${element.element_number}`,
-                  title: element.description,
+                  title: element.description || '',
                   description: element.description,
                   hindiExplanation: element.interpretation || '',
                   category: element.is_core ? 'Core' : 'Commitment',

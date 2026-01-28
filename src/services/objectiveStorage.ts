@@ -1,4 +1,4 @@
-import type { ObjectiveElement, NABHChapter, NABHStandard, NABHObjectiveElement } from '../types/nabh';
+import type { ObjectiveElement, NABHChapter, NABHStandard, NABHObjectiveElement, ElementCategory } from '../types/nabh';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -833,6 +833,7 @@ export async function insertObjectiveElement(element: {
   description: string;
   interpretation?: string;
   is_core?: boolean;
+  category?: ElementCategory;
   status?: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
   assignee?: string;
   evidence_links?: string;
@@ -852,6 +853,7 @@ export async function insertObjectiveElement(element: {
         body: JSON.stringify({
           ...element,
           is_core: element.is_core || false,
+          category: element.category || (element.is_core ? 'Core' : 'Commitment'),
           status: element.status || 'Not Started',
         }),
       }
@@ -1161,6 +1163,7 @@ export async function updateObjectiveElement(
     description: string;
     interpretation: string;
     is_core: boolean;
+    category: ElementCategory;
     status: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
     assignee: string;
     evidence_links: string;

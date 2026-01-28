@@ -29,7 +29,7 @@ import Chip from '@mui/material/Chip';
 import Icon from '@mui/material/Icon';
 import Tooltip from '@mui/material/Tooltip';
 import * as XLSX from 'xlsx';
-import type { NABHChapter, NABHStandard, NABHObjectiveElement } from '../types/nabh';
+import type { NABHChapter, NABHStandard, NABHObjectiveElement, ElementCategory } from '../types/nabh';
 import {
   loadChaptersFromSupabase,
   loadAllStandards,
@@ -93,13 +93,22 @@ export default function NABHMasterPage() {
 
   // Form state for elements
   const [editingElement, setEditingElement] = useState<NABHObjectiveElement | null>(null);
-  const [elementForm, setElementForm] = useState({
+  const [elementForm, setElementForm] = useState<{
+    chapter_id: string;
+    standard_id: string;
+    element_number: string;
+    description: string;
+    interpretation: string;
+    is_core: boolean;
+    category: ElementCategory;
+  }>({
     chapter_id: '',
     standard_id: '',
     element_number: '',
     description: '',
     interpretation: '',
     is_core: false,
+    category: 'Commitment',
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,7 +176,35 @@ export default function NABHMasterPage() {
     if (filterStandard) {
       filtered = filtered.filter(e => e.standard_id === filterStandard);
     }
-    return filtered;
+
+    // Sort elements by: Chapter -> Standard Number -> Element Letter
+    // e.g., AAC.1.a, AAC.1.b, AAC.1.c, AAC.2.a, AAC.2.b, COP.1.a...
+    return filtered.sort((a, b) => {
+      const standardA = standards.find(s => s.id === a.standard_id);
+      const standardB = standards.find(s => s.id === b.standard_id);
+
+      if (!standardA || !standardB) return 0;
+
+      const chapterA = chapters.find(c => c.id === standardA.chapter_id);
+      const chapterB = chapters.find(c => c.id === standardB.chapter_id);
+
+      if (!chapterA || !chapterB) return 0;
+
+      // First sort by chapter number
+      if (chapterA.chapter_number !== chapterB.chapter_number) {
+        return chapterA.chapter_number - chapterB.chapter_number;
+      }
+
+      // Then by standard number (numeric comparison)
+      const stdNumA = parseInt(standardA.standard_number) || 0;
+      const stdNumB = parseInt(standardB.standard_number) || 0;
+      if (stdNumA !== stdNumB) {
+        return stdNumA - stdNumB;
+      }
+
+      // Finally by element letter (a, b, c, d...)
+      return a.element_number.localeCompare(b.element_number);
+    });
   };
 
   // Build element code (e.g., AAC.1.a)
@@ -177,6 +214,22 @@ export default function NABHMasterPage() {
     const chapter = chapters.find(c => c.id === standard.chapter_id);
     if (!chapter) return `${standard.standard_number}.${element.element_number}`;
     return `${chapter.name}.${standard.standard_number}.${element.element_number}`;
+  };
+
+  // Get category display info
+  const getCategoryDisplay = (element: NABHObjectiveElement): { label: string; color: 'default' | 'error' | 'primary' | 'secondary' } => {
+    const category = element.category || (element.is_core ? 'Core' : 'Commitment');
+    switch (category) {
+      case 'Core':
+        return { label: 'CORE', color: 'error' };
+      case 'Achievement':
+        return { label: 'Achievement', color: 'primary' };
+      case 'Excellence':
+        return { label: 'Excellence', color: 'secondary' };
+      case 'Commitment':
+      default:
+        return { label: 'Commitment', color: 'default' };
+    }
   };
 
   // Chapter CRUD handlers
@@ -297,6 +350,7 @@ export default function NABHMasterPage() {
       description: '',
       interpretation: '',
       is_core: false,
+      category: 'Commitment',
     });
     setElementDialogOpen(true);
   };
@@ -311,6 +365,7 @@ export default function NABHMasterPage() {
       description: element.description,
       interpretation: element.interpretation || '',
       is_core: element.is_core,
+      category: element.category || (element.is_core ? 'Core' : 'Commitment'),
     });
     setElementDialogOpen(true);
   };
@@ -324,6 +379,7 @@ export default function NABHMasterPage() {
           description: elementForm.description,
           interpretation: elementForm.interpretation,
           is_core: elementForm.is_core,
+          category: elementForm.category,
         });
         if (result.success) {
           setMessage({ type: 'success', text: 'Element updated successfully' });
@@ -338,6 +394,7 @@ export default function NABHMasterPage() {
           description: elementForm.description,
           interpretation: elementForm.interpretation,
           is_core: elementForm.is_core,
+          category: elementForm.category,
         });
         if (result.success) {
           setMessage({ type: 'success', text: 'Element added successfully' });
@@ -758,51 +815,63 @@ export default function NABHMasterPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell width={120}>Code</TableCell>
+                    <TableCell width={120}>Category</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell width={80}>Core</TableCell>
                     <TableCell width={120}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {getFilteredElements().map(element => (
-                    <TableRow key={element.id} hover>
-                      <TableCell>
-                        <Chip label={buildElementCode(element)} size="small" variant="outlined" />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ maxWidth: 500 }} noWrap>
-                          {element.description}
-                        </Typography>
-                        {element.interpretation && (
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
-                            {element.interpretation.substring(0, 100)}...
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {element.is_core && <Chip label="Core" size="small" color="error" />}
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="Edit">
-                          <IconButton size="small" onClick={() => handleEditElement(element)}>
-                            <Icon fontSize="small">edit</Icon>
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton
+                  {getFilteredElements().map(element => {
+                    const categoryInfo = getCategoryDisplay(element);
+                    return (
+                      <TableRow key={element.id} hover>
+                        <TableCell>
+                          <Chip label={buildElementCode(element)} size="small" variant="outlined" />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={categoryInfo.label}
                             size="small"
-                            color="error"
-                            onClick={() => handleDeleteClick('element', element.id, buildElementCode(element))}
-                          >
-                            <Icon fontSize="small">delete</Icon>
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            color={categoryInfo.color}
+                            variant={categoryInfo.color === 'default' ? 'outlined' : 'filled'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ maxWidth: 500 }} noWrap>
+                            {element.description}
+                          </Typography>
+                          {element.interpretation && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                              {element.interpretation.substring(0, 100)}...
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {element.is_core && <Chip label="Core" size="small" color="error" />}
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title="Edit">
+                            <IconButton size="small" onClick={() => handleEditElement(element)}>
+                              <Icon fontSize="small">edit</Icon>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteClick('element', element.id, buildElementCode(element))}
+                            >
+                              <Icon fontSize="small">delete</Icon>
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {getFilteredElements().length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
+                      <TableCell colSpan={5} align="center">
                         <Typography color="text.secondary" sx={{ py: 4 }}>
                           No objective elements found. Use the filters above or add new elements.
                         </Typography>
@@ -979,15 +1048,44 @@ export default function NABHMasterPage() {
               rows={4}
               placeholder="Detailed interpretation of this objective element"
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={elementForm.is_core}
-                  onChange={e => setElementForm({ ...elementForm, is_core: e.target.checked })}
-                />
-              }
-              label="Core Element"
-            />
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={elementForm.category}
+                  label="Category"
+                  onChange={e => {
+                    const newCategory = e.target.value as ElementCategory;
+                    setElementForm({
+                      ...elementForm,
+                      category: newCategory,
+                      is_core: newCategory === 'Core',
+                    });
+                  }}
+                >
+                  <MenuItem value="Commitment">Commitment</MenuItem>
+                  <MenuItem value="Core">CORE</MenuItem>
+                  <MenuItem value="Achievement">Achievement</MenuItem>
+                  <MenuItem value="Excellence">Excellence</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={elementForm.is_core}
+                    onChange={e => {
+                      const isCore = e.target.checked;
+                      setElementForm({
+                        ...elementForm,
+                        is_core: isCore,
+                        category: isCore ? 'Core' : elementForm.category === 'Core' ? 'Commitment' : elementForm.category,
+                      });
+                    }}
+                  />
+                }
+                label="Core Element"
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>

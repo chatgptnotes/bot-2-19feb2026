@@ -103,6 +103,7 @@ export interface NABHObjectiveElement {
   description: string;
   interpretation: string;
   is_core: boolean;
+  category?: ElementCategory;  // Commitment, Core, Achievement, Excellence
   status: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
   assignee: string;
   evidence_links: string;
