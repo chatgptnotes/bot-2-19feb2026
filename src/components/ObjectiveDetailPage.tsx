@@ -843,7 +843,7 @@ Use EXACTLY this HTML template structure (fill in the content sections):
   </table>
 
   <div class="stamp-area">
-    <div class="stamp-text">DR. MURALI'S HOPE HOSPITAL</div>
+    <div class="stamp-text">HOPE HOSPITAL</div>
     <div>QUALITY MANAGEMENT SYSTEM</div>
     <div style="margin-top: 5px; font-size: 10px;">Controlled Document</div>
   </div>

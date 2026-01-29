@@ -50,24 +50,30 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'AAC.1',
-        title: 'The organization defines and displays the services it can provide.',
+        title: 'The organization defines and displays the healthcare services that it provides.',
         intent: 'To ensure patients and community are aware of services available at the healthcare facility.',
         objectiveElements: [
           {
             code: 'AAC.1.a',
-            description: 'The services being provided are clearly defined and are in consonance with the needs of the community.',
+            description: 'The healthcare services being provided are defined and are in consonance with the needs of the community.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.1.b',
-            description: 'The defined services are prominently displayed.',
+            description: 'Each defined healthcare service should have diagnostic and treatment services with suitably qualified personnel who provide out-patient, in-patient and emergency cover.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.1.c',
-            description: 'The staff is oriented to these services.',
+            description: 'Scope of healthcare services of each department is defined.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.1.d',
+            description: 'The organization\'s defined healthcare services are prominently displayed.',
             category: 'Commitment',
             isCore: false
           }
@@ -75,42 +81,42 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.2',
-        title: 'The organization has a well-defined registration and admission process.',
+        title: 'The organization has a well-defined registration, admission and transfer process.',
         intent: 'To ensure smooth patient flow from registration to admission with proper documentation.',
         objectiveElements: [
           {
             code: 'AAC.2.a',
-            description: 'Documented policies and procedures are used for registering and admitting patients.',
+            description: 'The organization has a mechanism for registering and admitting patients.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.2.b',
-            description: 'The documented procedures address out-patients, in-patients and emergency patients.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'AAC.2.c',
             description: 'A unique identification number is generated at the end of registration.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'AAC.2.d',
+            code: 'AAC.2.c',
             description: 'Patients are accepted only if the organization can provide the required service.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'AAC.2.e',
-            description: 'The documented policies and procedures also address managing patients during non-availability of beds.',
+            code: 'AAC.2.d',
+            description: 'The organization has a mechanism to address management of patients during non-availability of beds.',
             category: 'Commitment',
             isCore: false
           },
           {
+            code: 'AAC.2.e',
+            description: 'Access to the healthcare services in the organization is prioritized according to the clinical needs of the patient.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
             code: 'AAC.2.f',
-            description: 'The staff is aware of these processes.',
+            description: 'Transfer–in and transfer-out / referral of patients to the organization is done appropriately.',
             category: 'Commitment',
             isCore: false
           }
@@ -118,36 +124,36 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.3',
-        title: 'There is an appropriate mechanism for transfer (in and out) or referral of patients.',
-        intent: 'To ensure safe patient transfer with appropriate communication and documentation.',
+        title: 'Patients cared for by the organization undergo an established initial assessment and regular re-assessment.',
+        intent: 'To ensure comprehensive initial patient assessment for appropriate care planning.',
         objectiveElements: [
           {
             code: 'AAC.3.a',
-            description: 'Documented policies and procedures exist for transfer of patients.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'AAC.3.b',
-            description: 'Transfer-out is based on the patients condition and need for continuing care.',
+            description: 'The initial assessment for the out–patients, day-care, in-patients and emergency patients is done.',
             category: 'Core',
             isCore: true
           },
           {
+            code: 'AAC.3.b',
+            description: 'The initial assessment results in a documented care plan.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
             code: 'AAC.3.c',
-            description: 'Transfer process addresses the responsibility during transfer.',
+            description: 'Patients are reassessed at appropriate intervals to determine their response to treatment and to plan further treatment or discharge.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'AAC.3.d',
-            description: 'A referral summary accompanies the patient.',
-            category: 'Core',
-            isCore: true
+            description: 'Out-patients are informed of their next follow-up, where appropriate.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.3.e',
-            description: 'Transfer-in of patients is consistent with the organizations mission and resources.',
+            description: 'The organization lays down guidelines and implements processes to identify early warning signs of change or deterioration in clinical conditions for initiating prompt intervention.',
             category: 'Commitment',
             isCore: false
           }
@@ -155,73 +161,115 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.4',
-        title: 'Patients cared for by the organization undergo an established initial assessment.',
-        intent: 'To ensure comprehensive initial patient assessment for appropriate care planning.',
+        title: 'Laboratory services are provided as per the scope of services of the organization and adhere to best practices.',
+        intent: 'To ensure availability of quality laboratory services for patient care.',
         objectiveElements: [
           {
             code: 'AAC.4.a',
-            description: 'Documented policies and procedures define the scope and content of assessments.',
-            category: 'Core',
-            isCore: true
+            description: 'Scope of the laboratory services is commensurate to the services provided by the organization.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.4.b',
-            description: 'Initial medical assessment is done within 24 hours of admission or earlier as per patient condition.',
-            category: 'Core',
-            isCore: true
+            description: 'The infrastructure (physical and equipment) and human resources are adequate to provide the defined scope of services.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.4.c',
-            description: 'Initial nursing assessment is done within 24 hours of admission or earlier as per patient condition.',
-            category: 'Core',
-            isCore: true
+            description: 'Requisition for tests, collection, identification, handling, safe transportation, processing and disposal of specimens is performed according to written guidance.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.4.d',
-            description: 'Assessment is comprehensive covering medical, nursing and other needs.',
+            description: 'Laboratory results are available within a defined time frame.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.4.e',
-            description: 'Assessments are documented in the patient record.',
-            category: 'Core',
-            isCore: true
+            description: 'Critical results are intimated to the person concerned at the earliest.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.4.f',
-            description: 'Patients requiring emergency care undergo immediate assessment.',
-            category: 'Core',
-            isCore: true
+            description: 'Laboratory tests not available in the organization are outsourced to organization(s) based on their quality assurance system.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.4.g',
+            description: 'The laboratory quality assurance programme is implemented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.4.h',
+            description: 'The programme includes periodic calibration and maintenance of all equipment.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'AAC.5',
-        title: 'Patients cared for by the organization undergo a regular reassessment.',
-        intent: 'To monitor patient progress and modify care plan accordingly.',
+        title: 'Imaging services are provided as per the scope of services of the organization and adhere to best practices.',
+        intent: 'To ensure availability of quality imaging services for patient diagnosis.',
         objectiveElements: [
           {
             code: 'AAC.5.a',
-            description: 'Patients are reassessed at appropriate intervals based on their condition and plan of care.',
+            description: 'Imaging services comply with legal and other requirements.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'AAC.5.b',
-            description: 'Reassessment is done by a qualified individual.',
+            description: 'Scope of the imaging services is commensurate to the services provided by the organization.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.5.c',
-            description: 'Reassessments are documented in the patient record.',
-            category: 'Core',
-            isCore: true
+            description: 'The infrastructure (physical and equipment) and human resources are adequate to provide for its defined scope of services.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.5.d',
-            description: 'The care plan is modified based on the reassessment.',
+            description: 'Imaging results are available in the standardised manner within a defined time frame.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.5.e',
+            description: 'Critical results are intimated immediately to the personnel concerned.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.5.f',
+            description: 'Imaging tests not available in the organization are outsourced to organization(s) based on their quality assurance system.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.5.g',
+            description: 'The quality assurance programme for imaging services is implemented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'AAC.5.h',
+            description: 'The programme addresses periodic internal / external peer review of imaging protocols and results using appropriate sampling.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'AAC.5.i',
+            description: 'The programme includes periodic calibration and maintenance of all equipment.',
             category: 'Commitment',
             isCore: false
           }
@@ -229,42 +277,36 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.6',
-        title: 'Laboratory services are provided as per the scope of services of the organization.',
-        intent: 'To ensure availability of quality laboratory services for patient care.',
+        title: 'There is an established safety programme in the laboratory and imaging services.',
+        intent: 'To ensure accuracy, reliability and safety of laboratory and imaging services.',
         objectiveElements: [
           {
             code: 'AAC.6.a',
-            description: 'Laboratory services are available as per the scope of the organization.',
+            description: 'The laboratory-safety programme is implemented.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.6.b',
-            description: 'Laboratory services are provided by qualified personnel.',
-            category: 'Core',
-            isCore: true
+            description: 'Laboratory personnel are appropriately trained in safe practices and are provided with appropriate safety measures.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.6.c',
-            description: 'Standard operating procedures guide collection, identification, handling, safe transportation and disposal of specimens.',
-            category: 'Core',
-            isCore: true
+            description: 'Patients are appropriately screened for safety / risk before imaging.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.6.d',
-            description: 'Laboratory results are available in a timely manner.',
+            description: 'Imaging personnel and patients use appropriate radiation safety and monitoring devices where applicable, and are trained in imaging safety practices and radiation-safety measures.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.6.e',
-            description: 'Critical results are communicated immediately to the concerned care provider.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'AAC.6.f',
-            description: 'Outsourced laboratory services meet the organizations quality requirements.',
+            description: 'Imaging signage is prominently displayed in all appropriate locations.',
             category: 'Commitment',
             isCore: false
           }
@@ -272,36 +314,30 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.7',
-        title: 'There is an established laboratory quality assurance and safety programme.',
-        intent: 'To ensure accuracy, reliability and safety of laboratory services.',
+        title: 'Patient care is continuous and multidisciplinary in nature.',
+        intent: 'To ensure continuity and coordination of care across departments.',
         objectiveElements: [
           {
             code: 'AAC.7.a',
-            description: 'There is a quality assurance programme for laboratory services.',
+            description: 'During all phases of care, there is a qualified individual identified as responsible for the patient\'s care.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.7.b',
-            description: 'Internal quality control is practiced.',
+            description: 'Information about the patient\'s care and response to treatment is shared among medical, nursing and other care-providers, including referrals to other departments.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.7.c',
-            description: 'External quality assurance (EQAS) is practiced where available.',
-            category: 'Achievement',
-            isCore: false
-          },
-          {
-            code: 'AAC.7.d',
-            description: 'Laboratory safety procedures are established and implemented.',
+            description: 'The organization implements standardised hand-over communication during each staffing shift, between shifts and during transfers between units/ departments.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'AAC.7.e',
-            description: 'Laboratory equipment is regularly calibrated and maintained.',
+            code: 'AAC.7.d',
+            description: 'Patient transfer within the organization is done safely.',
             category: 'Commitment',
             isCore: false
           }
@@ -309,112 +345,50 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'AAC.8',
-        title: 'Imaging services are provided as per the scope of services of the organization.',
-        intent: 'To ensure availability of quality imaging services for patient diagnosis.',
+        title: 'The organization has an established discharge process, and defines the content of the discharge summary.',
+        intent: 'To ensure safe discharge with appropriate planning and education.',
         objectiveElements: [
           {
             code: 'AAC.8.a',
-            description: 'Imaging services are available as per the scope of the organization.',
-            category: 'Core',
-            isCore: true
+            description: 'A discharge summary is given to all the patients leaving the organization (including patients leaving against medical advice).',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.8.b',
-            description: 'Imaging services are provided by qualified personnel.',
-            category: 'Core',
-            isCore: true
+            description: 'Discharge summary contains the patient\'s name, unique identification number, date of admission and date of discharge.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'AAC.8.c',
-            description: 'Standard operating procedures guide the imaging services.',
+            description: 'Discharge summary contains the reasons for admission, significant findings and diagnosis, the patient\'s condition at the time of discharge, information regarding investigation results, any procedure performed, medication administered and other treatment given.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.8.d',
-            description: 'Imaging results are available in a timely manner.',
+            description: 'Discharge summary contains follow-up advice, medication and other instructions in an understandable manner.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'AAC.8.e',
-            description: 'Radiation safety norms are adhered to.',
-            category: 'Core',
-            isCore: true
+            description: 'Discharge summary incorporates instructions about when and how to obtain urgent care.',
+            category: 'Achievement',
+            isCore: false
           },
           {
             code: 'AAC.8.f',
-            description: 'Outsourced imaging services meet the organizations quality requirements.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'AAC.9',
-        title: 'There is an established imaging quality assurance and safety programme.',
-        intent: 'To ensure quality and safety in imaging services.',
-        objectiveElements: [
-          {
-            code: 'AAC.9.a',
-            description: 'There is a quality assurance programme for imaging services.',
+            description: 'In case of death, the summary of the case also includes the cause of death.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'AAC.9.b',
-            description: 'Imaging equipment is regularly calibrated and maintained.',
-            category: 'Commitment',
+            code: 'AAC.8.g',
+            description: 'The organisation adheres to planned discharge and identify special needs regarding care following discharge.',
+            category: 'Excellence',
             isCore: false
-          },
-          {
-            code: 'AAC.9.c',
-            description: 'Personnel are monitored for radiation exposure.',
-            category: 'Core',
-            isCore: true
-          }
-        ]
-      },
-      {
-        code: 'AAC.10',
-        title: 'The organization has a defined discharge process.',
-        intent: 'To ensure safe discharge with appropriate planning and education.',
-        objectiveElements: [
-          {
-            code: 'AAC.10.a',
-            description: 'Documented policies and procedures guide the discharge process.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'AAC.10.b',
-            description: 'Discharge planning is initiated early in the care process.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'AAC.10.c',
-            description: 'A discharge summary is provided to the patient at the time of discharge.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'AAC.10.d',
-            description: 'The discharge summary includes relevant clinical and follow-up information.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'AAC.10.e',
-            description: 'Patient and family are educated about medications, diet, and follow-up care.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'AAC.10.f',
-            description: 'Patients leaving against medical advice are informed about risks.',
-            category: 'Core',
-            isCore: true
           }
         ]
       }
@@ -1027,141 +1001,171 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'MOM.1',
-        title: 'Documented procedures guide the organization of pharmacy services and usage of medication.',
+        title: 'Multidisciplinary committee guides pharmacy services and management of medication.',
         intent: 'To ensure safe and effective pharmacy operations.',
         objectiveElements: [
           {
             code: 'MOM.1.a',
-            description: 'Pharmacy services are organized to meet patient needs.',
+            description: 'The organisation develops, updates and implements a list of medications appropriate for the patients and as per the scope of the organisation\'s clinical services.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'MOM.1.b',
-            description: 'Pharmacy services are available 24x7 or as per organizational policy.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'MOM.1.c',
-            description: 'A qualified pharmacist supervises pharmacy operations.',
+            description: 'Pharmacy services and medication usage are implemented following written guidance through a multidisciplinary committee.',
             category: 'Core',
             isCore: true
           },
           {
+            code: 'MOM.1.c',
+            description: 'The organisation adheres to the procedure for the acquisition of formulary medications and medications not listed in the formulary.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
             code: 'MOM.1.d',
-            description: 'A formulary appropriate to the organization is developed and maintained.',
+            description: 'There is a procedure to obtain medication when the pharmacy is closed.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'MOM.1.e',
-            description: 'Medications are stored under proper conditions.',
-            category: 'Core',
-            isCore: true
+            description: 'Implantable prosthesis and medical devices are used in accordance with laid down criteria.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.1.f',
-            description: 'Expiry of medications is monitored.',
-            category: 'Core',
-            isCore: true
+            description: 'The clinicians adhere to the current formulary.',
+            category: 'Excellence',
+            isCore: false
           }
         ]
       },
       {
         code: 'MOM.2',
-        title: 'Documented procedures guide the prescription of medications.',
-        intent: 'To ensure safe and appropriate medication prescribing.',
+        title: 'Medications are stored appropriately and are available where required.',
+        intent: 'To ensure safe medication storage and availability.',
         objectiveElements: [
           {
             code: 'MOM.2.a',
-            description: 'Medications are prescribed by authorized personnel.',
+            description: 'Medications are stored in a clean, safe and secure environment; and incorporating the manufacturer\'s recommendation(s).',
             category: 'Core',
             isCore: true
           },
           {
             code: 'MOM.2.b',
-            description: 'Prescriptions are legible and complete.',
-            category: 'Core',
-            isCore: true
+            description: 'Sound inventory control practices guide storage of the medications throughout the organisation.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.2.c',
-            description: 'Look-alike, sound-alike medications are identified and managed.',
+            description: 'The organisation defines a list and mechanism for storage of high-risk medication(s) including look - alike sound-alike medications.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'MOM.2.d',
-            description: 'High-risk medications are identified and managed safely.',
-            category: 'Core',
-            isCore: true
+            description: 'High-risk medications are stored in areas of the organisation where it is clinically necessary.',
+            category: 'Achievement',
+            isCore: false
           },
           {
             code: 'MOM.2.e',
-            description: 'Verbal and telephone orders are minimized and verified.',
+            description: 'The list of emergency medications is defined and is stored uniformly.',
             category: 'Commitment',
             isCore: false
+          },
+          {
+            code: 'MOM.2.f',
+            description: 'Emergency medications are available all the time and are replenished promptly when used.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'MOM.3',
-        title: 'Documented procedures guide the safe dispensing of medications.',
-        intent: 'To ensure accurate and safe medication dispensing.',
+        title: 'Medications are prescribed safely and rationally.',
+        intent: 'To ensure safe and appropriate medication prescribing.',
         objectiveElements: [
           {
             code: 'MOM.3.a',
-            description: 'Medications are dispensed by qualified personnel.',
-            category: 'Core',
-            isCore: true
+            description: 'Medication prescription is in consonance with good practices/guidelines for the rational prescription of medications.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.3.b',
-            description: 'Prescriptions are verified before dispensing.',
+            description: 'The organisation adheres to the determined minimum requirements of a prescription.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'MOM.3.c',
-            description: 'Patients are counseled about medications.',
+            description: 'Drug allergies and previous adverse drug reactions are ascertained before prescribing.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'MOM.3.d',
-            description: 'Dispensing records are maintained.',
-            category: 'Commitment',
+            description: 'The organisation has a mechanism to assist the clinician in prescribing appropriate medication.',
+            category: 'Excellence',
             isCore: false
+          },
+          {
+            code: 'MOM.3.e',
+            description: 'Implementation of verbal orders ensures safe medication management practices.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'MOM.3.f',
+            description: 'Audit of medication orders/prescription is carried out to check for safe and rational prescription of medications.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'MOM.3.g',
+            description: 'Corrective and/or preventive action(s) is taken based on the audit, where appropriate.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'MOM.3.h',
+            description: 'Reconciliation of medications occurs at transition points of patient care.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'MOM.4',
-        title: 'There are defined procedures for medication administration.',
-        intent: 'To ensure safe medication administration.',
+        title: 'Medication orders are written in a uniform manner.',
+        intent: 'To ensure standardized medication ordering.',
         objectiveElements: [
           {
             code: 'MOM.4.a',
-            description: 'Medications are administered by trained and authorized personnel.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation ensures that only authorised personnel write orders.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.4.b',
-            description: 'Patient identification is verified before medication administration.',
-            category: 'Core',
-            isCore: true
+            description: 'Medication orders are written in a uniform location in the medical records, which also reflects the patient\'s name and unique identification number.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.4.c',
-            description: 'Medication administration is documented.',
-            category: 'Core',
-            isCore: true
+            description: 'Medication orders are legible, dated, timed and signed.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.4.d',
-            description: 'Self-administration is supervised when permitted.',
+            description: 'Medication orders contain the name of the medicine, route of administration, strength to be administered and frequency/time of administration.',
             category: 'Commitment',
             isCore: false
           }
@@ -1169,55 +1173,202 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'MOM.5',
-        title: 'Patients are monitored for adverse drug events after medication administration.',
-        intent: 'To detect and manage adverse drug events.',
+        title: 'Medications are dispensed in a safe manner.',
+        intent: 'To ensure accurate and safe medication dispensing.',
         objectiveElements: [
           {
             code: 'MOM.5.a',
-            description: 'Adverse drug events are defined.',
+            description: 'Dispensing of medications is done safely.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'MOM.5.b',
-            description: 'Patients are monitored for adverse drug events.',
-            category: 'Core',
-            isCore: true
+            description: 'Medication recalls are handled effectively.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.5.c',
-            description: 'Adverse drug events are documented and reported.',
+            description: 'Near-expiry medications are handled effectively.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.5.d',
+            description: 'Dispensed medications are labelled.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'MOM.5.d',
-            description: 'Appropriate action is taken for adverse drug events.',
+            code: 'MOM.5.e',
+            description: 'High-risk medication orders are verified before dispensing.',
             category: 'Core',
             isCore: true
+          },
+          {
+            code: 'MOM.5.f',
+            description: 'Return of medications to the pharmacy is addressed.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'MOM.6',
-        title: 'Documented procedures guide the use of medical gases.',
-        intent: 'To ensure safe handling and use of medical gases.',
+        title: 'Medications are administered safely.',
+        intent: 'To ensure safe medication administration.',
         objectiveElements: [
           {
             code: 'MOM.6.a',
-            description: 'Medical gases are stored safely.',
-            category: 'Core',
-            isCore: true
+            description: 'Administration of medication is done in a safe manner.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'MOM.6.b',
-            description: 'Medical gases are administered by trained personnel.',
+            description: 'Prepared medication is labelled before preparation of a second drug.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.6.c',
+            description: 'The patient is identified before administration.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.6.d',
+            description: 'Medication is verified from the medication order and physically inspected before administration.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'MOM.6.c',
-            description: 'Stock levels of medical gases are monitored.',
+            code: 'MOM.6.e',
+            description: 'Strength, route and timing is verified from the order before administration.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.6.f',
+            description: 'Measures to avoid catheter and tubing mis-connections during medication administration are implemented.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'MOM.6.g',
+            description: 'Medication administration is documented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.6.h',
+            description: 'Measures to govern patient\'s self-administration of medications are implemented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.6.i',
+            description: 'Measures to govern patient\'s medications brought from outside the organisation are implemented.',
+            category: 'Achievement',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'MOM.7',
+        title: 'Patients are monitored after medication administration.',
+        intent: 'To detect and manage adverse drug events.',
+        objectiveElements: [
+          {
+            code: 'MOM.7.a',
+            description: 'Patients are monitored after medication administration.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.7.b',
+            description: 'Medications are changed where appropriate based on the monitoring.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.7.c',
+            description: 'The organisation captures near miss, medication error and adverse drug reaction.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'MOM.7.d',
+            description: 'Near miss, medication error and adverse drug reaction are reported and analysed within a specified time frame.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.7.e',
+            description: 'Corrective and/or preventive action(s) are taken based on the analysis.',
+            category: 'Commitment',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'MOM.8',
+        title: 'Narcotic drugs and psychotropic substances, chemotherapeutic agents and radioactive agents are used in a safe manner.',
+        intent: 'To ensure safe handling and use of controlled substances.',
+        objectiveElements: [
+          {
+            code: 'MOM.8.a',
+            description: 'Narcotic drugs and psychotropic substances, chemotherapeutic agents and radioactive agents are used safely.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.8.b',
+            description: 'Narcotic drugs and psychotropic substances, chemotherapeutic agents and radioactive agents are prescribed by appropriate caregivers.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.8.c',
+            description: 'Narcotic drugs and psychotropic substances, chemotherapeutic agents and radioactive agents drugs are stored securely.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.8.d',
+            description: 'Chemotherapy and radioactive agents are prepared properly and safely, and administered by qualified personnel.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.8.e',
+            description: 'A proper record is kept of the usage, administration and disposal of narcotic drugs and psychotropic substances, chemotherapeutic agents and radioactive agents.',
+            category: 'Commitment',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'MOM.9',
+        title: 'Implantable prosthesis and medical devices are used in accordance with laid down criteria.',
+        intent: 'To ensure safe use of implantable devices.',
+        objectiveElements: [
+          {
+            code: 'MOM.9.a',
+            description: 'Written guidance address procurement and usage of implantable prostheses.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.9.b',
+            description: 'Patient and his/her family are counselled for the usage of the implantable prosthesis and medical devises including precautions if any.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'MOM.9.c',
+            description: 'The batch and the serial number of the implantable prosthesis and medical devises are recorded in the patients\' medical records, the master logbook and the discharge summary.',
             category: 'Commitment',
             isCore: false
           }
@@ -1237,42 +1388,36 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'PRE.1',
-        title: 'The organization protects patient and family rights during care and informs them about their responsibilities.',
+        title: 'The organisation protects and promotes patient and family rights and informs them about their responsibilities during care.',
         intent: 'To ensure patients are aware of and exercise their rights.',
         objectiveElements: [
           {
             code: 'PRE.1.a',
-            description: 'Patient rights are documented and displayed.',
-            category: 'Core',
-            isCore: true
+            description: 'Patient and family rights and responsibilities are documented, displayed, and they are made aware of the same.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'PRE.1.b',
-            description: 'Patient responsibilities are communicated.',
-            category: 'Commitment',
+            description: 'Patient and family rights and responsibilities are actively promoted.',
+            category: 'Achievement',
             isCore: false
           },
           {
             code: 'PRE.1.c',
-            description: 'Staff is trained on patient rights.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organisation protects patient and family rights.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PRE.1.d',
-            description: 'Patient privacy is maintained during care.',
+            description: 'The organisation has a mechanism to report a violation of patient and family rights.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'PRE.1.e',
-            description: 'Confidentiality of patient information is maintained.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PRE.1.f',
-            description: 'Patients are protected from physical abuse.',
+            description: 'Violation of patient and family rights are monitored, analysed and corrective/preventive action taken by the top leadership of the organisation.',
             category: 'Core',
             isCore: true
           }
@@ -1280,73 +1425,133 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'PRE.2',
-        title: 'Patient rights support individual beliefs, values and involve the patient and family in decision making processes.',
+        title: 'Patient and family rights support individual beliefs, values and involve the patient and family in decision-making processes.',
         intent: 'To respect patient autonomy and cultural values.',
         objectiveElements: [
           {
             code: 'PRE.2.a',
-            description: 'Patient beliefs and values are respected.',
+            description: 'Patients and family rights include respecting values and beliefs, any special preferences, cultural needs, and responding to requests for spiritual needs.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.2.b',
-            description: 'Cultural and religious preferences are accommodated.',
+            description: 'Patient and family rights include respect for personal dignity and privacy during examination, procedures and treatment.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.2.c',
-            description: 'Patients are involved in decision making about their care.',
+            description: 'Patient and family rights include protection from neglect or abuse.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.2.d',
-            description: 'Patients can refuse treatment after being informed of consequences.',
+            description: 'Patient and family rights include treating patient information as confidential.',
             category: 'Core',
             isCore: true
+          },
+          {
+            code: 'PRE.2.e',
+            description: 'Patient and family rights include the refusal of treatment.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.f',
+            description: 'Patient and family rights include a right to seek an additional opinion regarding clinical care.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.g',
+            description: 'Patient and family rights include informed consent before the transfusion of blood and blood components, anaesthesia, surgery, initiation of any research protocol and any other invasive/high-risk procedures/treatment.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'PRE.2.h',
+            description: 'Patient and family rights include a right to complain and information on how to voice a complaint.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.i',
+            description: 'Patient and family rights include information on the expected cost of the treatment.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.j',
+            description: 'Patient and family rights include access to their clinical records.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.k',
+            description: 'Patient and family rights include information on the name of the treating doctor, care plan, progress and information on their health care needs.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.l',
+            description: 'Patient rights include determining what information regarding their care would be provided to self and family.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.m',
+            description: 'The patient and/or family members are explained about the proposed care, including the risks, alternatives and benefits.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.n',
+            description: 'The patient and/or family members are explained about the expected results and complications.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.o',
+            description: 'The care plan is prepared and modified in consultation with the patient and/or family members.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'PRE.2.p',
+            description: 'The patient and/or family members are provided multidisciplinary counselling when appropriate.',
+            category: 'Achievement',
+            isCore: false
           }
         ]
       },
       {
         code: 'PRE.3',
-        title: 'A documented policy for obtaining patient and/or families consent exists for informed decision making about their care.',
+        title: 'Informed consent is obtained from the patient or family about their care.',
         intent: 'To ensure informed consent is obtained.',
         objectiveElements: [
           {
             code: 'PRE.3.a',
-            description: 'A documented consent policy exists.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organisation obtains informed consent from the patient or family for situations where informed consent is required. Informed consent process adhered to statutory norms.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PRE.3.b',
-            description: 'Informed consent is obtained for procedures and surgeries.',
+            description: 'Informed consent includes information regarding the procedure; it\'s risks, benefits, alternatives and as to who will perform the procedure in a language that they can understand.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'PRE.3.c',
-            description: 'Consent includes information about risks, benefits and alternatives.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PRE.3.d',
-            description: 'Consent is obtained by the treating physician.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PRE.3.e',
-            description: 'General consent is obtained at admission.',
+            description: 'The organisation describes who can give consent when a patient is incapable of independent decision making and implements the same.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'PRE.3.f',
-            description: 'Consent for high-risk procedures is specifically documented.',
+            code: 'PRE.3.d',
+            description: 'Informed consent is taken by the person performing the procedure.',
             category: 'Core',
             isCore: true
           }
@@ -1354,73 +1559,104 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'PRE.4',
-        title: 'Patients and families have a right to information and education about their health.',
+        title: 'Patient and families have a right to information, education and communication about their healthcare needs.',
         intent: 'To ensure patients receive appropriate health education.',
         objectiveElements: [
           {
             code: 'PRE.4.a',
-            description: 'Patients are informed about their diagnosis.',
+            description: 'Patient and/or family are educated in a language and format that they can understand.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'PRE.4.b',
-            description: 'Patients are informed about planned treatment and care.',
-            category: 'Core',
-            isCore: true
+            description: 'Patient and/or family are educated about the safe and effective use of medication and the potential side effects of the medication, when appropriate.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'PRE.4.c',
-            description: 'Patients are educated about medications.',
+            description: 'Patient and/or family are educated about food-drug interaction and about diet, nutrition and immunisations.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.4.d',
-            description: 'Patients are educated about diet and nutrition.',
+            description: 'Patient and/or family are educated about their specific disease process, complications and prevention strategies.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.4.e',
-            description: 'Patients are educated about safe and effective use of equipment.',
+            description: 'Patient and/or family are educated about preventing healthcare associated infections.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.4.f',
-            description: 'Patient education is documented.',
-            category: 'Commitment',
+            description: 'Communication with the patients and/or families is done effectively.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'PRE.5',
-        title: 'The organization addresses patient grievances and complaints.',
-        intent: 'To ensure patient feedback is addressed appropriately.',
+        title: 'Patients and families have a right to information on expected costs.',
+        intent: 'To ensure transparency in healthcare costs.',
         objectiveElements: [
           {
             code: 'PRE.5.a',
-            description: 'A grievance redressal mechanism exists.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The patient and/or family members are made aware of the pricing policy in different settings (out-patient, emergency, ICU and in-patient).',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PRE.5.b',
-            description: 'Patients are informed about the grievance mechanism.',
+            description: 'The relevant tariff list is available to patients.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.5.c',
-            description: 'Grievances are documented and addressed.',
+            description: 'The patient and/or family members are explained about the expected costs.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PRE.5.d',
-            description: 'Feedback is used for improvement.',
+            description: 'Patient and/or family are informed about the financial implications when there is a change in the care plan.',
+            category: 'Achievement',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'PRE.6',
+        title: 'The organization has a mechanism to capture patient\'s feedback and to redress complaints.',
+        intent: 'To ensure patient feedback is addressed appropriately.',
+        objectiveElements: [
+          {
+            code: 'PRE.6.a',
+            description: 'The organisation has a mechanism to capture feedback from patients, which includes patient satisfaction.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PRE.6.b',
+            description: 'The organisation has a mechanism to capture the patient experience.',
+            category: 'Excellence',
+            isCore: false
+          },
+          {
+            code: 'PRE.6.c',
+            description: 'The organisation redresses patient complaints as per the defined mechanism. Patient and/or family members are made aware of the procedure for giving feedback and/or lodging complaints.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'PRE.6.d',
+            description: 'Feedback and complaints are reviewed and/or analysed within a defined time frame. Corrective and/or preventive action(s) are taken based on the analysis where appropriate.',
             category: 'Achievement',
             isCore: false
           }
@@ -1440,116 +1676,134 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'HIC.1',
-        title: 'The organization has an infection control programme.',
+        title: 'The organisation has a comprehensive and coordinated Hospital Infection Prevention and Control (HIC) programme aimed at reducing/eliminating risks to patients, visitors, providers of care and community.',
         intent: 'To establish a comprehensive infection control program.',
         objectiveElements: [
           {
             code: 'HIC.1.a',
-            description: 'An infection control programme is in place.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The hospital infection prevention and control programme is documented, which aims at preventing and reducing the risk of healthcare associated infections in the hospital.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HIC.1.b',
-            description: 'An infection control team/committee exists.',
-            category: 'Commitment',
+            description: 'The infection prevention and control programme is reviewed based on infection control assessment tool.',
+            category: 'Achievement',
             isCore: false
           },
           {
             code: 'HIC.1.c',
-            description: 'Standard precautions are adhered to at all times.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation has a multidisciplinary infection control committee and an infection control team, which coordinate the implementation of all infection prevention and control activities.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.1.d',
-            description: 'Hand hygiene practices are followed.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation implements information, education and communication programme for infection prevention and control activities for the community and participates in managing community outbreaks and pandemics.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.1.e',
-            description: 'Personal protective equipment is available and used appropriately.',
+            description: 'The management makes available resources required for the infection control programme.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.1.f',
-            description: 'Cleanliness and general hygiene of facilities is maintained.',
-            category: 'Core',
-            isCore: true
+            description: 'Isolation/barrier nursing facilities are available.',
+            category: 'Achievement',
+            isCore: false
           }
         ]
       },
       {
         code: 'HIC.2',
-        title: 'The hospital has an infection control manual which is periodically updated and conducts surveillance activities.',
-        intent: 'To guide infection control activities and monitor infections.',
+        title: 'The organisation implements the infection prevention and control programme in clinical areas.',
+        intent: 'To guide infection control activities in clinical settings.',
         objectiveElements: [
           {
             code: 'HIC.2.a',
-            description: 'An infection control manual exists.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organisation adheres to standard precautions at all times.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HIC.2.b',
-            description: 'The manual is periodically reviewed and updated.',
-            category: 'Achievement',
-            isCore: false
+            description: 'The organisation adheres to hand-hygiene guidelines.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HIC.2.c',
-            description: 'Surveillance of hospital-associated infections is conducted.',
+            description: 'The organisation adheres to transmission-based precautions.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HIC.2.d',
-            description: 'Surveillance data is analyzed and used for improvement.',
-            category: 'Achievement',
+            description: 'The organisation adheres to safe injection and infusion practices.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HIC.2.e',
+            description: 'Appropriate antimicrobial usage policy is established and documented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HIC.2.f',
+            description: 'The organisation implements the antimicrobial usage policy and monitors the rational use of antimicrobial agents.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HIC.2.g',
+            description: 'The organisation implements an antibiotic stewardship programme.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'HIC.3',
-        title: 'The hospital takes actions to prevent or reduce the risks of Hospital Associated Infections (HAI) in patients and employees.',
-        intent: 'To reduce healthcare-associated infections.',
+        title: 'The organisation implements the infection prevention and control programme in support services.',
+        intent: 'To ensure infection control in support areas.',
         objectiveElements: [
           {
             code: 'HIC.3.a',
-            description: 'Measures are taken to prevent surgical site infections.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation has appropriate engineering controls to prevent infections.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.3.b',
-            description: 'Measures are taken to prevent catheter-associated urinary tract infections.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation designs and implements a plan to reduce the risk of infection during construction and renovation.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.3.c',
-            description: 'Measures are taken to prevent central line-associated bloodstream infections.',
+            description: 'The organisation adheres to housekeeping procedures.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.3.d',
-            description: 'Measures are taken to prevent ventilator-associated pneumonia.',
+            description: 'Biomedical waste (BMW) is handled appropriately and safely.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.3.e',
-            description: 'Isolation practices are implemented when needed.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation adheres to laundry and linen management processes.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.3.f',
-            description: 'Staff safety measures are in place.',
+            description: 'The organisation adheres to kitchen sanitation and food-handling issues.',
             category: 'Commitment',
             isCore: false
           }
@@ -1557,79 +1811,85 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'HIC.4',
-        title: 'There are documented procedures for sterilization activities.',
-        intent: 'To ensure effective sterilization of equipment and supplies.',
+        title: 'The organisation takes actions to prevent or reduce healthcare associated infections (HAI) in patients and staff working in the hospital.',
+        intent: 'To reduce healthcare-associated infections.',
         objectiveElements: [
           {
             code: 'HIC.4.a',
-            description: 'A central sterile supply department/area exists.',
+            description: 'The organisation takes action to prevent catheter-associated urinary tract Infections.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HIC.4.b',
-            description: 'Sterilization procedures are documented.',
+            description: 'The organisation takes action to prevent infection-related ventilator associated complication/ventilator-associated pneumonia.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HIC.4.c',
-            description: 'Sterilization is monitored using appropriate indicators.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation takes action to prevent catheter linked blood stream infections.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.4.d',
-            description: 'Sterile supplies are stored and handled appropriately.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation takes action to prevent surgical site infections.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HIC.4.e',
-            description: 'Equipment cleaning and disinfection practices are followed.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation implements occupational health and safety practices to reduce the risk of transmitting microorganisms among health care providers.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HIC.4.f',
+            description: 'Appropriate post-exposure prophylaxis is provided to all staff members concerned.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'HIC.5',
-        title: 'Statutory provisions with regard to Bio-Medical Waste (BMW) management are complied with.',
-        intent: 'To ensure proper biomedical waste management.',
+        title: 'The organisation performs surveillance to capture and monitor infection prevention and control data.',
+        intent: 'To monitor and analyze infection data.',
         objectiveElements: [
           {
             code: 'HIC.5.a',
-            description: 'Biomedical waste is segregated at source.',
+            description: 'The scope of surveillance incorporates tracking and analysing of infection risks, rates and trends.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.5.b',
-            description: 'Color-coded bins and bags are used.',
+            description: 'Surveillance includes monitoring compliance with hand-hygiene guidelines.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.5.c',
-            description: 'Biomedical waste is transported safely.',
-            category: 'Core',
-            isCore: true
+            description: 'Surveillance includes mechanisms to capture the occurrence of multi-drug-resistant organisms and highly virulent infections.',
+            category: 'Achievement',
+            isCore: false
           },
           {
             code: 'HIC.5.d',
-            description: 'Biomedical waste is disposed as per regulations.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'HIC.5.e',
-            description: 'Records of biomedical waste disposal are maintained.',
+            description: 'The organisation identifies and takes appropriate action to control outbreaks of infections.',
             category: 'Commitment',
             isCore: false
           },
           {
+            code: 'HIC.5.e',
+            description: 'Surveillance activities include monitoring the effectiveness of the housekeeping services.',
+            category: 'Core',
+            isCore: true
+          },
+          {
             code: 'HIC.5.f',
-            description: 'Staff is trained in biomedical waste management.',
+            description: 'Surveillance data is analysed, and appropriate corrective and preventive actions are taken and feedback regarding the same is provided regularly to the appropriate health care team.',
             category: 'Commitment',
             isCore: false
           }
@@ -1637,61 +1897,36 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'HIC.6',
-        title: 'The infection control program is supported by hospital management and includes training of staff.',
-        intent: 'To ensure management support and staff competency in infection control.',
+        title: 'Infection prevention measures include sterilisation and/or disinfection of instruments, equipment and devices.',
+        intent: 'To ensure effective sterilization of equipment and supplies.',
         objectiveElements: [
           {
             code: 'HIC.6.a',
-            description: 'Management supports the infection control program.',
+            description: 'The organisation provides adequate space and appropriate zoning for sterilisation activities.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HIC.6.b',
-            description: 'Staff is trained on infection control practices.',
+            description: 'Cleaning, packing, disinfection and/or sterilisation, storing and the issue of items is done as per the written guidance.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'HIC.6.c',
-            description: 'Resources are allocated for infection control.',
+            description: 'Reprocessing of single-use instruments, equipment and devices are done as per written guidance.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HIC.6.d',
-            description: 'Infection control compliance is monitored.',
-            category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'HIC.7',
-        title: 'Laundry and linen management processes are in place.',
-        intent: 'To ensure safe handling of laundry and linen.',
-        objectiveElements: [
-          {
-            code: 'HIC.7.a',
-            description: 'Laundry services are organized appropriately.',
+            description: 'Regular validation tests for sterilisation are carried out and documented.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'HIC.7.b',
-            description: 'Infected linen is handled separately.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'HIC.7.c',
-            description: 'Clean and soiled linen are stored separately.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'HIC.7.d',
-            description: 'Staff handling linen use appropriate protection.',
+            code: 'HIC.6.e',
+            description: 'The established recall procedure is implemented when a breakdown in the sterilisation system is identified.',
             category: 'Commitment',
             isCore: false
           }
@@ -1701,7 +1936,7 @@ export const nabhShcoStandards: Chapter[] = [
   },
 
   // ============================================
-  // CHAPTER 6: CONTINUOUS QUALITY IMPROVEMENT (CQI)
+  // CHAPTER 6: PATIENT SAFETY AND QUALITY IMPROVEMENT (PSQ)
   // ============================================
   {
     code: 'PSQ',
@@ -1711,229 +1946,203 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'PSQ.1',
-        title: 'The organization has a quality assurance programme.',
-        intent: 'To establish a systematic approach to quality improvement.',
+        title: 'The organisation implements a patient-safety programme and a structured quality improvement programme.',
+        intent: 'To establish a systematic approach to patient safety and quality improvement.',
         objectiveElements: [
           {
             code: 'PSQ.1.a',
-            description: 'A quality assurance programme is in place.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The patient safety programme is developed, implemented and maintained by a multi-disciplinary committee.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PSQ.1.b',
-            description: 'Quality objectives are defined.',
+            description: 'The patient-safety programme identifies opportunities for improvement based on review at pre-defined intervals.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.1.c',
-            description: 'Quality improvement activities are conducted.',
-            category: 'Achievement',
-            isCore: false
+            description: 'The organisation performs proactive analysis of patient safety risks and makes improvement accordingly.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PSQ.1.d',
-            description: 'A quality committee/team exists.',
+            description: 'The organisation adapts and implements national/international patient-safety goals/solutions.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'PSQ.1.e',
+            description: 'A comprehensive quality improvement programme is developed, implemented and maintained by a multi-disciplinary committee.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'PSQ.1.f',
+            description: 'There is a designated individual for coordinating and implementing the quality improvement programme.',
             category: 'Commitment',
             isCore: false
+          },
+          {
+            code: 'PSQ.1.g',
+            description: 'The quality improvement programme identifies opportunities for improvement based on review at pre-defined intervals.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PSQ.1.h',
+            description: 'Audits are conducted at regular intervals as a means of continuous monitoring.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'PSQ.1.i',
+            description: 'There is an established process in the organisation to monitor and improve quality of nursing care.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'PSQ.2',
-        title: 'The organization identifies key quality indicators to monitor clinical and managerial performance.',
+        title: 'The organisation identifies key indicators to monitor the structures, processes and outcomes which are used as tools for continual improvement.',
         intent: 'To measure and monitor organizational performance.',
         objectiveElements: [
           {
             code: 'PSQ.2.a',
-            description: 'Key indicators are identified for clinical areas.',
+            description: 'The organisation identifies and monitors key indicators to oversee the clinical structures, processes and outcomes.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.2.b',
-            description: 'Key indicators are identified for managerial areas.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organisation identifies and monitors the key indicators to oversee infection control activities.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PSQ.2.c',
-            description: 'Data is collected and analyzed.',
+            description: 'The organisation identifies and monitors the key indicators to oversee the managerial structures, processes and outcomes.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.2.d',
-            description: 'Results are used for improvement.',
-            category: 'Achievement',
-            isCore: false
+            description: 'The organisation identifies and monitors the key indicators to oversee patient safety activities.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PSQ.2.e',
-            description: 'Benchmarking is done where possible.',
-            category: 'Excellence',
+            description: 'Data is regularly verified by the quality team and is analysed to identify the opportunities for improvement.',
+            category: 'Commitment',
             isCore: false
           }
         ]
       },
       {
         code: 'PSQ.3',
-        title: 'The organization has a patient safety programme.',
-        intent: 'To establish a culture of patient safety.',
+        title: 'There is an established system for clinical audit and quality improvement programmes.',
+        intent: 'To systematically review and improve patient care.',
         objectiveElements: [
           {
             code: 'PSQ.3.a',
-            description: 'A patient safety programme is in place.',
+            description: 'Clinical audits are performed to improve the quality of patient care and documented.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.3.b',
-            description: 'Patient identification is ensured before any procedure.',
-            category: 'Core',
-            isCore: true
+            description: 'The parameters to be audited are defined by the organisation.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'PSQ.3.c',
-            description: 'Communication is standardized for handovers.',
-            category: 'Core',
-            isCore: true
+            description: 'Medical and nursing staff participates in this system.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'PSQ.3.d',
-            description: 'High-alert medications are managed safely.',
-            category: 'Core',
-            isCore: true
+            description: 'Remedial measures are implemented.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'PSQ.3.e',
-            description: 'Surgical safety is ensured.',
+            description: 'The organisation undertakes quality improvement projects.',
             category: 'Core',
             isCore: true
-          },
-          {
-            code: 'PSQ.3.f',
-            description: 'Fall prevention measures are in place.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PSQ.3.g',
-            description: 'Pressure ulcer prevention measures are in place.',
-            category: 'Commitment',
-            isCore: false
           }
         ]
       },
       {
         code: 'PSQ.4',
-        title: 'The organization has an incident reporting and learning system.',
-        intent: 'To learn from incidents and near-misses.',
+        title: 'The patient safety and quality improvement programme are supported by the management.',
+        intent: 'To ensure management support for quality and safety.',
         objectiveElements: [
           {
             code: 'PSQ.4.a',
-            description: 'An incident reporting system exists.',
-            category: 'Commitment',
+            description: 'The management creates a culture of safety.',
+            category: 'Achievement',
             isCore: false
           },
           {
             code: 'PSQ.4.b',
-            description: 'Incidents are reported without fear of punitive action.',
+            description: 'The leaders at all levels in the organisation are aware of the intent of the patient safety quality improvement program and the approach to its implementation.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.4.c',
-            description: 'Incidents are analyzed and action is taken.',
+            description: 'The management makes available adequate resources required for patient safety and quality improvement programme, earmarks adequate funds from its annual budget in this regard.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.4.d',
-            description: 'Learning from incidents is shared.',
-            category: 'Achievement',
+            description: 'The management uses the feedback obtained from the workforce to improve patient safety and quality improvement programme.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'PSQ.5',
-        title: 'There is an established system for audit of patient care services.',
-        intent: 'To systematically review and improve patient care.',
+        title: 'Incidents are collected and analysed to ensure continual quality improvement.',
+        intent: 'To learn from incidents and near-misses.',
         objectiveElements: [
           {
             code: 'PSQ.5.a',
-            description: 'Medical audits are conducted.',
-            category: 'Achievement',
-            isCore: false
+            description: 'The organisation implements an incident management system.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'PSQ.5.b',
-            description: 'Nursing audits are conducted.',
-            category: 'Achievement',
+            description: 'The organisation has a mechanism to identify sentinel events.',
+            category: 'Commitment',
             isCore: false
           },
           {
             code: 'PSQ.5.c',
-            description: 'Audit findings are used for improvement.',
-            category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'PSQ.6',
-        title: 'Sentinel events are intensively analyzed.',
-        intent: 'To conduct root cause analysis of serious events.',
-        objectiveElements: [
-          {
-            code: 'PSQ.6.a',
-            description: 'Sentinel events are defined.',
+            description: 'The organisation has an established process for analysis of incidents.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'PSQ.6.b',
-            description: 'Root cause analysis is conducted for sentinel events.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PSQ.6.c',
-            description: 'Corrective actions are implemented.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'PSQ.6.d',
-            description: 'Effectiveness of corrective actions is monitored.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'PSQ.7',
-        title: 'Patient and employee satisfaction is measured.',
-        intent: 'To understand stakeholder satisfaction and improve services.',
-        objectiveElements: [
-          {
-            code: 'PSQ.7.a',
-            description: 'Patient satisfaction is measured.',
+            code: 'PSQ.5.d',
+            description: 'Corrective and preventive actions are taken based on the findings of such analysis.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'PSQ.7.b',
-            description: 'Employee satisfaction is measured.',
-            category: 'Achievement',
-            isCore: false
-          },
-          {
-            code: 'PSQ.7.c',
-            description: 'Results are analyzed and used for improvement.',
-            category: 'Achievement',
+            code: 'PSQ.5.e',
+            description: 'The organization shall have a process for informing various stakeholders in case of a near miss / adverse event / sentinel event.',
+            category: 'Excellence',
             isCore: false
           }
         ]
@@ -1952,80 +2161,104 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'ROM.1',
-        title: 'The responsibilities of the management are defined.',
+        title: 'The organisation identifies those responsible for governance and their roles are defined.',
         intent: 'To ensure clear governance structure and accountability.',
         objectiveElements: [
           {
             code: 'ROM.1.a',
-            description: 'The governance structure is defined.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Those responsible for governance are identified, and their roles and responsibilities are defined and documented.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'ROM.1.b',
-            description: 'Responsibilities of management are documented.',
+            description: 'Those responsible for governance lay down the organisation\'s vision, mission and values and make them public.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'ROM.1.c',
-            description: 'Management reviews organizational performance.',
+            description: 'Those responsible for governance monitor and measure the performance of the organisation against the stated mission.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'ROM.1.d',
+            description: 'Those responsible for governance appoint the senior leaders in the organisation.',
             category: 'Commitment',
             isCore: false
+          },
+          {
+            code: 'ROM.1.e',
+            description: 'Those responsible for governance support the ethical management framework of the organisation.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'ROM.2',
-        title: 'The services provided by each department are documented.',
-        intent: 'To ensure clarity about departmental services and scope.',
+        title: 'The organisation is headed by a leader who shall be responsible for operating the organisation on a day-to-day basis.',
+        intent: 'To ensure competent leadership.',
         objectiveElements: [
           {
             code: 'ROM.2.a',
-            description: 'Services of each department are defined.',
+            description: 'The person heading the organisation has requisite and appropriate administrative qualifications.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'ROM.2.b',
-            description: 'Department heads are accountable for their services.',
+            description: 'The person heading the organisation has requisite and appropriate administrative experience.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'ROM.2.c',
-            description: 'Coordination between departments exists.',
-            category: 'Commitment',
+            description: 'The leader is responsible for and complies with the laid-down and applicable legislations, regulations and notifications.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'ROM.2.d',
+            description: 'The performance of the organisation\'s leader is reviewed for effectiveness.',
+            category: 'Achievement',
             isCore: false
           }
         ]
       },
       {
         code: 'ROM.3',
-        title: 'The organization is managed by the leaders in an ethical manner.',
-        intent: 'To ensure ethical management practices.',
+        title: 'The organisation displays professionalism in its functioning.',
+        intent: 'To ensure professional management practices.',
         objectiveElements: [
           {
             code: 'ROM.3.a',
-            description: 'Ethical practices are followed.',
+            description: 'Those responsible for governance approve the strategic and operational plans and the organisation\'s annual budget.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'ROM.3.b',
-            description: 'Conflict of interest is managed.',
-            category: 'Commitment',
+            description: 'The organisation coordinates the functioning with departments and external agencies and monitors the progress in achieving the defined goals and objectives.',
+            category: 'Achievement',
             isCore: false
           },
           {
             code: 'ROM.3.c',
-            description: 'Professional ethics are upheld.',
+            description: 'The functioning of committees is reviewed for their effectiveness.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'ROM.3.d',
-            description: 'Transparency in dealings is maintained.',
+            description: 'The organisation documents the service standards that are measurable and monitors them.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'ROM.3.e',
+            description: 'The organization documents staff rights and responsibilities.',
             category: 'Commitment',
             isCore: false
           }
@@ -2033,106 +2266,37 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'ROM.4',
-        title: 'A suitably qualified and experienced individual heads the organization.',
-        intent: 'To ensure competent leadership.',
+        title: 'Management ensures that patient-safety aspects and risk-management issues are an integral part of patient care and hospital management.',
+        intent: 'To integrate safety and risk management into organizational culture.',
         objectiveElements: [
           {
             code: 'ROM.4.a',
-            description: 'The organization has a qualified head/administrator.',
+            description: 'Management ensures proactive risk management across the organisation.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'ROM.4.b',
-            description: 'The head has appropriate authority and responsibility.',
-            category: 'Commitment',
+            description: 'Management ensures integration between quality improvement, risk management and strategic planning within the organisation.',
+            category: 'Excellence',
             isCore: false
           },
           {
             code: 'ROM.4.c',
-            description: 'The head ensures compliance with laws and regulations.',
-            category: 'Core',
-            isCore: true
-          }
-        ]
-      },
-      {
-        code: 'ROM.5',
-        title: 'Leaders ensure that patient safety aspects and risk management issues are an integral part of patient care and hospital management.',
-        intent: 'To integrate safety and risk management into organizational culture.',
-        objectiveElements: [
-          {
-            code: 'ROM.5.a',
-            description: 'Patient safety is a priority for management.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'ROM.5.b',
-            description: 'Risk management processes are in place.',
+            description: 'Management ensures implementation of systems for internal and external reporting of system and process failures.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'ROM.5.c',
-            description: 'Resources are allocated for safety initiatives.',
-            category: 'Commitment',
-            isCore: false
+            code: 'ROM.4.d',
+            description: 'Management ensures that it has a documented agreement for all outsourced services that include service parameters.',
+            category: 'Core',
+            isCore: true
           },
           {
-            code: 'ROM.5.d',
-            description: 'Safety culture is promoted.',
+            code: 'ROM.4.e',
+            description: 'Management monitors the quality of the outsourced services and improvements are made as required.',
             category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'ROM.6',
-        title: 'The organization has a documented strategic and operational plan.',
-        intent: 'To ensure systematic planning for organizational growth.',
-        objectiveElements: [
-          {
-            code: 'ROM.6.a',
-            description: 'A strategic plan exists.',
-            category: 'Achievement',
-            isCore: false
-          },
-          {
-            code: 'ROM.6.b',
-            description: 'An operational plan exists.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'ROM.6.c',
-            description: 'Plans are reviewed and updated periodically.',
-            category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'ROM.7',
-        title: 'Statutory and regulatory requirements are complied with.',
-        intent: 'To ensure legal compliance.',
-        objectiveElements: [
-          {
-            code: 'ROM.7.a',
-            description: 'All required licenses and registrations are in place.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'ROM.7.b',
-            description: 'Licenses are renewed in a timely manner.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'ROM.7.c',
-            description: 'Compliance with statutory requirements is monitored.',
-            category: 'Commitment',
             isCore: false
           }
         ]
@@ -2141,151 +2305,181 @@ export const nabhShcoStandards: Chapter[] = [
   },
 
   // ============================================
-  // CHAPTER 8: FACILITIES MANAGEMENT AND SAFETY (FMS)
+  // CHAPTER 8: FACILITY MANAGEMENT AND SAFETY (FMS)
   // ============================================
   {
     code: 'FMS',
     name: 'FMS',
-    fullName: 'Facilities Management and Safety',
+    fullName: 'Facility Management and Safety',
     type: 'Organization Centered',
     standards: [
       {
         code: 'FMS.1',
-        title: 'The organization is aware of and complies with the relevant rules and regulations, laws and bylaws and requisite facility inspection requirements.',
-        intent: 'To ensure regulatory compliance for facilities.',
+        title: 'The organisation\'s environment and facilities operate in a planned manner and promotes environment-friendly measures.',
+        intent: 'To ensure planned facility operations and environmental responsibility.',
         objectiveElements: [
           {
             code: 'FMS.1.a',
-            description: 'Applicable laws and regulations are identified.',
+            description: 'Facilities and space provisions are appropriate to the scope of services.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'FMS.1.b',
-            description: 'Compliance with building codes is maintained.',
-            category: 'Core',
-            isCore: true
+            description: 'As-built and updated drawings are maintained as per statutory requirements.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'FMS.1.c',
-            description: 'Required facility inspections are completed.',
+            description: 'There are internal and external sign postings in the organisation in a manner understood by the patient, families and community.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'FMS.1.d',
-            description: 'Non-conformities are addressed.',
+            description: 'Potable water and electricity are available round the clock.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'FMS.1.e',
+            description: 'Alternate sources for electricity and water are provided as a backup for any failure/shortage and their functioning is tested at a predefined frequency.',
             category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'FMS.1.f',
+            description: 'The organisation takes initiatives towards an energy-efficient and environment friendly hospital.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'FMS.2',
-        title: 'The organizations environment and facilities operate to ensure safety of patients, their families, staff and visitors.',
+        title: 'The organisation\'s environment and facilities operate to ensure the safety of patients, their families, staff and visitors.',
         intent: 'To provide a safe physical environment.',
         objectiveElements: [
           {
             code: 'FMS.2.a',
-            description: 'The facility is designed for patient safety.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Patient-safety devices and infrastructure are installed across the organisation and inspected periodically.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'FMS.2.b',
-            description: 'Safety hazards are identified and addressed.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation has facilities for the differently-abled.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'FMS.2.c',
-            description: 'Security measures are in place.',
+            description: 'Operational planning identifies areas which need to have extra security and describes access to different areas in the hospital by staff, patients, and visitors.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'FMS.2.d',
+            description: 'Facility inspection rounds to ensure safety are conducted at least once a month.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'FMS.2.d',
-            description: 'Access control is implemented.',
+            code: 'FMS.2.e',
+            description: 'Organisation conducts electrical safety audits for the facility.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'FMS.2.f',
+            description: 'There is a procedure which addresses the identification and disposal of material(s) not in use in the organisation.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'FMS.2.e',
-            description: 'Signage and wayfinding are adequate.',
-            category: 'Commitment',
-            isCore: false
+            code: 'FMS.2.g',
+            description: 'Hazardous materials are identified and used safely within the organisation.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'FMS.3',
-        title: 'The organization has a program for clinical and support service equipment management.',
+        title: 'The organisation has a programme for medical and support service equipment management.',
         intent: 'To ensure proper equipment management and maintenance.',
         objectiveElements: [
           {
             code: 'FMS.3.a',
-            description: 'Equipment inventory is maintained.',
+            description: 'The organisation plans for medical and support service equipment in accordance with its services and strategic plan.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'FMS.3.b',
-            description: 'Equipment is regularly inspected and maintained.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.3.c',
-            description: 'Preventive maintenance schedules are followed.',
+            description: 'Medical equipment and support service equipment are inventoried, and proper logs are maintained as required.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'FMS.3.d',
-            description: 'Staff is trained to operate equipment.',
+            code: 'FMS.3.c',
+            description: 'The documented operational and maintenance (preventive and breakdown) plan for medical and support service equipment is implemented.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'FMS.3.e',
-            description: 'Equipment malfunctions are reported and addressed.',
+            code: 'FMS.3.d',
+            description: 'Medical and support service equipment are periodically inspected and calibrated for their proper functioning.',
             category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'FMS.3.e',
+            description: 'Qualified and trained personnel operate and maintain medical and support service equipment.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'FMS.3.f',
+            description: 'There is monitoring of medical equipment and medical devices related to adverse events, and compliance hazard notices on recalls.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'FMS.3.g',
+            description: 'Downtime for critical equipment breakdown is monitored from reporting to inspection and implementation of corrective actions.',
+            category: 'Achievement',
             isCore: false
           }
         ]
       },
       {
         code: 'FMS.4',
-        title: 'The organization has provisions for safe water, electricity, medical gases and vacuum systems.',
+        title: 'The organisation has a programme for medical gases, vacuum and compressed air.',
         intent: 'To ensure reliable utility services.',
         objectiveElements: [
           {
             code: 'FMS.4.a',
-            description: 'Safe drinking water is available.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.4.b',
-            description: 'Water quality is tested regularly.',
+            description: 'Written guidance governs the implementation of procurement, handling, storage, distribution, usage and replenishment of medical gases.',
             category: 'Commitment',
             isCore: false
           },
           {
+            code: 'FMS.4.b',
+            description: 'Medical gases are handled, stored, distributed and used in a safe manner.',
+            category: 'Core',
+            isCore: true
+          },
+          {
             code: 'FMS.4.c',
-            description: 'Electricity supply is reliable with backup arrangements.',
+            description: 'Alternate sources for medical gases, vacuum and compressed air are provided for, in case of failure and their functioning is tested at a predefined frequency.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'FMS.4.d',
-            description: 'Medical gases are safely stored and supplied.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.4.e',
-            description: 'Vacuum systems are maintained.',
+            description: 'There is an operational, inspection, testing and maintenance plan for piped medical gas, compressed air and vacuum installation.',
             category: 'Commitment',
             isCore: false
           }
@@ -2293,167 +2487,37 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'FMS.5',
-        title: 'Plans for fire and non-fire emergencies within the facilities are in place.',
+        title: 'The organisation has plans for fire and non-fire emergencies within the facilities.',
         intent: 'To ensure preparedness for internal emergencies.',
         objectiveElements: [
           {
             code: 'FMS.5.a',
-            description: 'A fire safety plan exists.',
+            description: 'The organisation has plans and provisions for early detection, abatement and containment of the fire, and non-fire emergencies.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'FMS.5.b',
-            description: 'Fire detection and suppression equipment is in place.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation has a documented and displayed exit plan in case of fire and non-fire emergencies.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'FMS.5.c',
-            description: 'Fire evacuation routes are marked and unobstructed.',
-            category: 'Core',
-            isCore: true
+            description: 'Mock drills are held at least twice a year.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'FMS.5.d',
-            description: 'Fire drills are conducted regularly.',
-            category: 'Core',
-            isCore: true
+            description: 'There is a maintenance plan for fire-related equipment and infrastructure.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'FMS.5.e',
-            description: 'Staff is trained in fire safety.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.5.f',
-            description: 'Non-fire emergency plans exist.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'FMS.6',
-        title: 'The organization has a smoking limitation policy.',
-        intent: 'To maintain a smoke-free environment.',
-        objectiveElements: [
-          {
-            code: 'FMS.6.a',
-            description: 'A no-smoking policy is in place.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.6.b',
-            description: 'No-smoking signs are displayed.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.6.c',
-            description: 'The policy is enforced.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'FMS.7',
-        title: 'The organization plans for handling community emergencies, epidemics and other disasters.',
-        intent: 'To ensure preparedness for external emergencies.',
-        objectiveElements: [
-          {
-            code: 'FMS.7.a',
-            description: 'A disaster management plan exists.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.7.b',
-            description: 'Roles and responsibilities are defined.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.7.c',
-            description: 'Mock drills are conducted.',
+            description: 'The organisation has a service continuity plan in case of fire and non-fire emergencies.',
             category: 'Achievement',
-            isCore: false
-          },
-          {
-            code: 'FMS.7.d',
-            description: 'Coordination with external agencies exists.',
-            category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'FMS.8',
-        title: 'The organization has a plan for the management of hazardous materials.',
-        intent: 'To ensure safe handling of hazardous materials.',
-        objectiveElements: [
-          {
-            code: 'FMS.8.a',
-            description: 'Hazardous materials are identified.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.8.b',
-            description: 'Material Safety Data Sheets (MSDS) are available.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.8.c',
-            description: 'Hazardous materials are stored safely.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.8.d',
-            description: 'Staff handling hazardous materials is trained.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.8.e',
-            description: 'Spill management procedures are in place.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'FMS.9',
-        title: 'The organization has systems in place to provide a safe and secure environment.',
-        intent: 'To ensure overall facility security.',
-        objectiveElements: [
-          {
-            code: 'FMS.9.a',
-            description: 'Security personnel/systems are in place.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.9.b',
-            description: 'Vulnerable areas are secured.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'FMS.9.c',
-            description: 'Visitor management system exists.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'FMS.9.d',
-            description: 'Vehicle parking is organized.',
-            category: 'Commitment',
             isCore: false
           }
         ]
@@ -2472,217 +2536,301 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'HRM.1',
-        title: 'The organization has a documented system of human resource planning.',
+        title: 'The organisation has a documented system of human resource planning.',
         intent: 'To ensure adequate staffing.',
         objectiveElements: [
           {
             code: 'HRM.1.a',
-            description: 'Staffing requirements are defined.',
-            category: 'Commitment',
+            description: 'Human resource planning supports the organisation\'s current and future ability to meet the care, treatment and service needs of the patient.',
+            category: 'Excellence',
             isCore: false
           },
           {
             code: 'HRM.1.b',
-            description: 'Staffing patterns are based on patient care needs.',
+            description: 'Written guidance governs the process of recruitment.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.1.c',
+            description: 'The organisation maintains an adequate number and mix of staff to meet the care, treatment and service needs of the patient.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.1.d',
+            description: 'The organisation has contingency plans to manage long- and short-term workforce shortages, including unplanned shortages.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'HRM.1.e',
+            description: 'The reporting relationships, job specification and job description are defined for each category of staff.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'HRM.1.c',
-            description: 'Nurse-patient ratio is maintained.',
+            code: 'HRM.1.f',
+            description: 'The organisation performs a background check of new staff.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HRM.1.g',
+            description: 'The organisation defines and implements a code of conduct for its staff.',
             category: 'Core',
             isCore: true
+          },
+          {
+            code: 'HRM.1.h',
+            description: 'Exit interviews are conducted and used as a tool to improve human resource practices.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'HRM.1.i',
+            description: 'Written guidance governs disciplinary and grievance handling mechanisms.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'HRM.2',
-        title: 'The organization implements a defined process for staff recruitment.',
-        intent: 'To ensure fair and effective recruitment.',
+        title: 'Staff are provided induction training and on-going professional training for development.',
+        intent: 'To orient new staff and ensure continuous professional development.',
         objectiveElements: [
           {
             code: 'HRM.2.a',
-            description: 'Job descriptions exist for all positions.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'HRM.2.b',
-            description: 'Recruitment process is documented.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'HRM.2.c',
-            description: 'Credentials are verified before appointment.',
+            description: 'Staff are provided with induction training.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'HRM.2.d',
-            description: 'Background verification is done.',
+            code: 'HRM.2.b',
+            description: 'Written guidance governs training and development policy for the staff through an on-going programme for professional training and development of the staff.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.2.c',
+            description: 'Staff are appropriately trained based on their specific job description.',
             category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HRM.2.d',
+            description: 'Staff involved in direct patient care are provided training on cardiopulmonary resuscitation at the time of induction and periodically thereafter.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.2.e',
+            description: 'Evaluation of training effectiveness is done by the organisation.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'HRM.3',
-        title: 'Staff are provided induction training at the time of joining the organization.',
-        intent: 'To orient new staff to the organization.',
+        title: 'Staff are trained in safety and quality-related aspects.',
+        intent: 'To ensure staff competency in safety and quality.',
         objectiveElements: [
           {
             code: 'HRM.3.a',
-            description: 'Induction training programme exists.',
+            description: 'Staff are trained in the organisation\'s safety programme.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.3.b',
-            description: 'New staff receive orientation to policies and procedures.',
+            description: 'Staff are provided training in the detection, handling, minimisation and elimination of identified risks within the organisation\'s environment.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.3.c',
-            description: 'Induction includes patient safety and infection control.',
+            description: 'Staff members are made aware of procedures to follow in the event of an incident.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HRM.3.d',
+            description: 'Staff are trained in occupational safety aspects.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'HRM.3.e',
+            description: 'Staff are trained in the organisation\'s disaster management plan.',
             category: 'Core',
             isCore: true
+          },
+          {
+            code: 'HRM.3.f',
+            description: 'Staff are trained in handling fire and non-fire emergencies.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.3.g',
+            description: 'Staff are trained in the organisation\'s quality improvement programme.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'HRM.4',
-        title: 'There is an ongoing program for professional training and development of the staff.',
-        intent: 'To ensure continuous professional development.',
+        title: 'An appraisal system for evaluating the performance of staff exists as an integral part of the human resource management process.',
+        intent: 'To assess and improve staff performance.',
         objectiveElements: [
           {
             code: 'HRM.4.a',
-            description: 'Training needs are identified.',
+            description: 'Performance appraisal is done for staff within the organisation and staff are made aware of the same at the time of induction.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.4.b',
-            description: 'Training programmes are conducted.',
+            description: 'Performance is evaluated based on pre-determined criteria.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.4.c',
-            description: 'Training records are maintained.',
-            category: 'Commitment',
+            description: 'The appraisal system is used as a tool for further development.',
+            category: 'Excellence',
             isCore: false
           },
           {
             code: 'HRM.4.d',
-            description: 'Effectiveness of training is evaluated.',
-            category: 'Achievement',
+            description: 'Performance appraisal is carried out at defined intervals and is documented.',
+            category: 'Commitment',
             isCore: false
           }
         ]
       },
       {
         code: 'HRM.5',
-        title: 'Staff are appropriately trained based on their specific job description.',
-        intent: 'To ensure competency in job functions.',
+        title: 'The organisation promotes staff well-being and addresses their health and safety needs.',
+        intent: 'To ensure staff health and safety.',
         objectiveElements: [
           {
             code: 'HRM.5.a',
-            description: 'Training is aligned with job requirements.',
+            description: 'Staff well-being is promoted through identification of health problems of the staff, including occupational health hazards, in accordance with the organisation\'s policy.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.5.b',
-            description: 'Competency is assessed.',
+            description: 'Health checks of staff are done at least once a year and the findings/results are documented.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.5.c',
+            description: 'Organisation provides treatment to staff who sustain workplace-related injuries.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'HRM.5.c',
-            description: 'Staff maintain required qualifications.',
-            category: 'Commitment',
-            isCore: false
+            code: 'HRM.5.d',
+            description: 'The organisation has measures in place for preventing and handling workplace violence.',
+            category: 'Core',
+            isCore: true
           }
         ]
       },
       {
         code: 'HRM.6',
-        title: 'Staff are trained on safety and quality-related aspects.',
-        intent: 'To ensure staff competency in safety and quality.',
+        title: 'There is documented personal information for each staff member.',
+        intent: 'To maintain accurate staff records.',
         objectiveElements: [
           {
             code: 'HRM.6.a',
-            description: 'Staff are trained on patient safety.',
-            category: 'Core',
-            isCore: true
+            description: 'Personal files are maintained with respect to all staff, and their confidentiality is ensured.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HRM.6.b',
-            description: 'Staff are trained on infection control.',
-            category: 'Core',
-            isCore: true
+            description: 'The personal files contain personal information regarding the staff\'s qualification, job description, proof of formal engagement verification of credentials and health status.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HRM.6.c',
-            description: 'Staff are trained on fire safety.',
-            category: 'Core',
-            isCore: true
+            description: 'Records of in-service training and education are contained in the personal files.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HRM.6.d',
-            description: 'Staff are trained on basic life support.',
-            category: 'Core',
-            isCore: true
+            description: 'Personal files contain results of all evaluations and remarks.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'HRM.7',
-        title: 'An appraisal system for evaluating the performance of an employee exists as an integral part of the human resources management process.',
-        intent: 'To assess and improve staff performance.',
+        title: 'There is a process for credentialing and privileging of medical professionals, permitted to provide patient care without supervision.',
+        intent: 'To ensure only qualified medical professionals provide care.',
         objectiveElements: [
           {
             code: 'HRM.7.a',
-            description: 'A performance appraisal system exists.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Medical professionals permitted by law, regulation and the organisation to provide patient care without supervision are identified.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HRM.7.b',
-            description: 'Appraisals are conducted periodically.',
+            description: 'The education, registration, training, experience and other information of medical professionals are identified, verified, documented and updated periodically.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.7.c',
-            description: 'Feedback is provided to staff.',
-            category: 'Achievement',
+            description: 'Medical professionals are granted privileges to admit and care for the patients in consonance with their qualification, training, experience and registration.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.7.d',
+            description: 'The requisite services to be provided by the medical professionals are known to them as well as the various departments/units of the organisation.',
+            category: 'Commitment',
             isCore: false
           }
         ]
       },
       {
         code: 'HRM.8',
-        title: 'Process for disciplinary and grievance handling is defined and implemented in the organization.',
-        intent: 'To ensure fair handling of disciplinary issues and grievances.',
+        title: 'There is a process for credentialing and privileging of nursing professionals, permitted to provide patient care without supervision.',
+        intent: 'To ensure only qualified nursing professionals provide care.',
         objectiveElements: [
           {
             code: 'HRM.8.a',
-            description: 'Disciplinary process is documented.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Nursing staff permitted by law, regulation and the organisation to provide patient care without supervision are identified.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HRM.8.b',
-            description: 'Grievance handling mechanism exists.',
+            description: 'The education, registration, training, experience and other information of nursing staff are identified, verified, documented and updated periodically.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'HRM.8.c',
-            description: 'Processes are implemented fairly.',
+            description: 'Nursing staff are granted privileges in consonance with their qualification, training, experience and registration.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'HRM.8.d',
+            description: 'The requisite services to be provided by the nursing staff are known to them as well as the various departments/units of the organisation.',
             category: 'Commitment',
             isCore: false
           }
@@ -2690,87 +2838,31 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'HRM.9',
-        title: 'The organization promotes staff well-being and addresses their health and safety needs.',
-        intent: 'To ensure staff health and safety.',
+        title: 'There is a process for credentialing and privileging of para-clinical professionals, permitted to provide patient care without supervision.',
+        intent: 'To ensure only qualified para-clinical professionals provide care.',
         objectiveElements: [
           {
             code: 'HRM.9.a',
-            description: 'Staff health check-ups are conducted.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Para-clinical professionals permitted by law, regulation and the organisation to provide patient care without supervision are identified.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HRM.9.b',
-            description: 'Staff immunization is ensured.',
-            category: 'Core',
-            isCore: true
+            description: 'The education, registration, training and experience of para-clinical professionals are appropriately verified, documented and updated periodically.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'HRM.9.c',
-            description: 'Staff safety is addressed.',
-            category: 'Commitment',
-            isCore: false
+            description: 'Para-clinical professionals are granted privileges in consonance with their qualification, training, experience and registration.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'HRM.9.d',
-            description: 'Post-exposure prophylaxis is available.',
-            category: 'Core',
-            isCore: true
-          }
-        ]
-      },
-      {
-        code: 'HRM.10',
-        title: 'There is documented personnel information for each staff member.',
-        intent: 'To maintain accurate staff records.',
-        objectiveElements: [
-          {
-            code: 'HRM.10.a',
-            description: 'Personal files are maintained for all staff.',
+            description: 'The requisite services to be provided by the para-clinical professionals are known to them as well as the various departments/units of the organisation.',
             category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'HRM.10.b',
-            description: 'Files contain relevant documents and credentials.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'HRM.10.c',
-            description: 'Records are kept confidential.',
-            category: 'Commitment',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'HRM.11',
-        title: 'There is a process for credentialing and privileging of medical professionals permitted to provide patient care without supervision.',
-        intent: 'To ensure only qualified professionals provide care.',
-        objectiveElements: [
-          {
-            code: 'HRM.11.a',
-            description: 'Credentialing process is defined.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'HRM.11.b',
-            description: 'Medical professionals are credentialed before practice.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'HRM.11.c',
-            description: 'Privileges are granted based on qualifications and competence.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'HRM.11.d',
-            description: 'Re-credentialing is done periodically.',
-            category: 'Achievement',
             isCore: false
           }
         ]
@@ -2789,24 +2881,36 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'IMS.1',
-        title: 'The organization has a well-defined information management system.',
+        title: 'Information needs of the stakeholders are met and data is captured and analyzed appropriately.',
         intent: 'To establish an effective information management framework.',
         objectiveElements: [
           {
             code: 'IMS.1.a',
-            description: 'An information management system is in place.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organization identifies, captures and disseminates the information needs of the patients, visitors, staff, management, external agencies and community.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'IMS.1.b',
-            description: 'Information needs are identified.',
+            description: 'Information management and technology acquisitions and maintenance plan are in consonance with the identified information needs.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'IMS.1.c',
-            description: 'Information is available for decision making.',
+            description: 'The organisation stores and retrieves data according to its information needs.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'IMS.1.d',
+            description: 'The organization contributes to external databases in accordance with the law and regulations.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'IMS.1.e',
+            description: 'Processes for data collection are standardized and data is analysed to meet the information needs.',
             category: 'Commitment',
             isCore: false
           }
@@ -2814,36 +2918,36 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'IMS.2',
-        title: 'Patient medical records are comprehensive and are maintained as per policy.',
+        title: 'The patients cared for by the organisation have a complete and accurate medical record.',
         intent: 'To ensure complete and accurate medical records.',
         objectiveElements: [
           {
             code: 'IMS.2.a',
-            description: 'A policy for medical records exists.',
+            description: 'The unique identifier is assigned to the medical record.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'IMS.2.b',
+            description: 'The contents of medical record are identified, documented and provides a complete, up-to-date and chronological account of patient care.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'IMS.2.b',
-            description: 'Medical records contain all relevant clinical information.',
-            category: 'Core',
-            isCore: true
-          },
-          {
             code: 'IMS.2.c',
-            description: 'Entries are dated, timed and signed.',
-            category: 'Core',
-            isCore: true
+            description: 'Authorized staff make the entry in the medical record, author of the entry can be identified.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'IMS.2.d',
-            description: 'Records are legible.',
-            category: 'Core',
-            isCore: true
+            description: 'Entry in the medical record is named, signed, dated and timed.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'IMS.2.e',
-            description: 'Corrections in records are done appropriately.',
+            description: 'The medical record has only authorised abbreviations.',
             category: 'Commitment',
             isCore: false
           }
@@ -2851,61 +2955,79 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'IMS.3',
-        title: 'Medical records are stored and retrieved as per policy.',
-        intent: 'To ensure secure storage and easy retrieval of records.',
+        title: 'The medical record reflects the continuity of care.',
+        intent: 'To ensure medical records support care continuity.',
         objectiveElements: [
           {
             code: 'IMS.3.a',
-            description: 'Records are stored securely.',
-            category: 'Core',
-            isCore: true
+            description: 'The medical record contains information regarding reasons for admission, diagnosis and plan of care.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'IMS.3.b',
-            description: 'Retention period is defined and followed.',
+            description: 'The medical record contains the details of assessments, re-assessments, consultations, results of investigations, operative and other procedures, and the details of the care provided.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'IMS.3.c',
-            description: 'Records are retrievable when needed.',
-            category: 'Core',
-            isCore: true
+            description: 'When patient is transferred to another hospital, the medical record contains the details of the transfer.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'IMS.3.d',
-            description: 'Access to records is controlled.',
-            category: 'Core',
-            isCore: true
+            description: 'The medical record contains a copy of the discharge summary.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'IMS.3.e',
+            description: 'In case of death, the medical record contains a copy of the cause of death certificate.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'IMS.3.f',
+            description: 'Care providers have access to current and past medical record.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'IMS.4',
-        title: 'Patient medical records are protected from loss, destruction, tampering and unauthorized access.',
+        title: 'The organisation maintains confidentiality, integrity and security of records, data and information.',
         intent: 'To ensure confidentiality and integrity of records.',
         objectiveElements: [
           {
             code: 'IMS.4.a',
-            description: 'Records are protected from loss and damage.',
+            description: 'The organization maintains the confidentiality of records, data and information.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'IMS.4.b',
-            description: 'Confidentiality of records is maintained.',
+            description: 'The organization maintains the integrity of records, data and information.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'IMS.4.c',
-            description: 'Unauthorized access is prevented.',
+            description: 'The organization maintains the security of records, data and information.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'IMS.4.d',
-            description: 'Backup and recovery procedures exist for electronic records.',
+            description: 'The organization discloses privileged health information as authorized by patient and/ or as required by law.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'IMS.4.e',
+            description: 'Request for access to information in the medical records by patients/physicians and other public agencies are addressed consistently.',
             category: 'Commitment',
             isCore: false
           }
@@ -2913,74 +3035,67 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'IMS.5',
-        title: 'The organization submits data and reports to external agencies as required.',
-        intent: 'To ensure regulatory reporting compliance.',
+        title: 'The organization ensures availability of current and relevant documents, records, data and information and provides for retention of the same.',
+        intent: 'To ensure document control and retention.',
         objectiveElements: [
           {
             code: 'IMS.5.a',
-            description: 'Statutory reporting requirements are identified.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The organization has an effective process for document control.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'IMS.5.b',
-            description: 'Reports are submitted in a timely manner.',
+            description: 'The organization retains patient\'s clinical records, data and information, according to its requirements.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'IMS.5.c',
+            description: 'The retention process provides expected confidentiality and security.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'IMS.5.c',
-            description: 'Notifiable diseases are reported.',
-            category: 'Core',
-            isCore: true
+            code: 'IMS.5.d',
+            description: 'The destruction of medical records, data and information is in accordance with the laid-down policy.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'IMS.6',
-        title: 'Data and information are used for planning and improvement.',
-        intent: 'To use data for organizational improvement.',
+        title: 'The organisation regularly carries out a review of medical records.',
+        intent: 'To ensure regular audit and improvement of medical records.',
         objectiveElements: [
           {
             code: 'IMS.6.a',
-            description: 'Data is analyzed for trends.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The medical records are reviewed periodically.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'IMS.6.b',
-            description: 'Information is used for planning.',
-            category: 'Achievement',
+            description: 'The review uses a representative sample of both active and discharged patients, based on statistical principles.',
+            category: 'Commitment',
             isCore: false
           },
           {
             code: 'IMS.6.c',
-            description: 'Information supports quality improvement.',
-            category: 'Achievement',
-            isCore: false
-          }
-        ]
-      },
-      {
-        code: 'IMS.7',
-        title: 'The organization maintains a list of abbreviations and symbols standardized across the organization.',
-        intent: 'To prevent confusion from abbreviations.',
-        objectiveElements: [
-          {
-            code: 'IMS.7.a',
-            description: 'A list of approved abbreviations exists.',
+            description: 'The review is conducted by identified individuals.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'IMS.7.b',
-            description: 'A list of prohibited abbreviations exists.',
+            code: 'IMS.6.d',
+            description: 'The review of records is based on identified parameters.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'IMS.7.c',
-            description: 'Staff is aware of the abbreviation policy.',
+            code: 'IMS.6.e',
+            description: 'Appropriate corrective and preventive measures are undertaken on the deficiencies pointed out in the review.',
             category: 'Commitment',
             isCore: false
           }
