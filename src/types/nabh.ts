@@ -55,6 +55,7 @@ export interface ObjectiveElement {
   code: string;
   title: string;
   description: string;          // NABH SHCO 3rd Edition description
+  interpretation: string;       // AI-generated interpretation/guidance
   hindiExplanation: string;     // Hindi explanation for staff
   category: ElementCategory;    // Core, Commitment, Achievement, Excellence
   isCore: boolean;              // Quick check for core elements

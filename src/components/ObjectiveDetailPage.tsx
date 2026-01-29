@@ -2194,6 +2194,28 @@ DESIGN REQUIREMENTS:
         </Typography>
       </Paper>
 
+      {/* AI Interpretation Section */}
+      {objective.interpretation && (
+        <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Icon color="primary">auto_awesome</Icon>
+            <Typography variant="h6" fontWeight={600} color="primary.main">
+              Interpretation & Guidance
+            </Typography>
+            <Chip label="AI Generated" size="small" color="primary" variant="outlined" />
+          </Box>
+          <Typography variant="body1" sx={{ lineHeight: 1.8, color: 'text.primary' }}>
+            {objective.interpretation}
+          </Typography>
+          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'primary.200' }}>
+            <Typography variant="caption" color="text.secondary">
+              This interpretation provides practical guidance for compliance, including documents to maintain, 
+              what NABH assessors look for, and relevant Indian regulatory context.
+            </Typography>
+          </Box>
+        </Paper>
+      )}
+
       {/* Main Content */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
