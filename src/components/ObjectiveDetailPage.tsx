@@ -72,7 +72,14 @@ const fileToBase64 = (file: File): Promise<string> => {
 export default function ObjectiveDetailPage() {
   const { chapterId, objectiveId } = useParams<{ chapterId: string; objectiveId: string }>();
   const navigate = useNavigate();
-  const { chapters, updateObjective, setSelectedChapter } = useNABHStore();
+  const { chapters, updateObjective, setSelectedChapter, isLoadingFromSupabase, loadDataFromSupabase } = useNABHStore();
+  
+  // Load data if not already loaded
+  useEffect(() => {
+    if (chapters.length === 0 && !isLoadingFromSupabase) {
+      loadDataFromSupabase();
+    }
+  }, [chapters.length, isLoadingFromSupabase, loadDataFromSupabase]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trainingFileInputRef = useRef<HTMLInputElement>(null);
   const sopFileInputRef = useRef<HTMLInputElement>(null);
@@ -277,6 +284,18 @@ export default function ObjectiveDetailPage() {
     loadSavedEvidences();
   }, [objective?.code]);
 
+  // Show loading state while data is being fetched
+  if (isLoadingFromSupabase || chapters.length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <CircularProgress size={48} sx={{ mb: 2 }} />
+        <Typography variant="h6" color="text.secondary">
+          Loading objective data...
+        </Typography>
+      </Box>
+    );
+  }
+
   if (!chapter || !objective) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -284,10 +303,13 @@ export default function ObjectiveDetailPage() {
         <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
           Objective not found
         </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Looking for: {chapterId}/{objectiveId}
+        </Typography>
         <Button
           variant="contained"
           startIcon={<Icon>arrow_back</Icon>}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           sx={{ mt: 2 }}
         >
           Back to Dashboard
