@@ -27,9 +27,17 @@ export const generateGeminiInfographic = async (config: InfographicConfig, custo
 
   const genAI = new GoogleGenerativeAI(apiKey);
   
-  // Model fallback strategy
-  // Trying strict model names that are compatible with older API keys
-  const modelsToTry = ['gemini-1.0-pro', 'gemini-pro', 'gemini-1.5-flash'];
+  // Model fallback strategy - Exhaustive list of aliases
+  const modelsToTry = [
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-001',
+    'gemini-1.5-pro',
+    'gemini-1.5-pro-latest',
+    'gemini-1.5-pro-001',
+    'gemini-1.0-pro',
+    'gemini-pro'
+  ];
   let model = null;
   let text = '';
   let lastError = null;
