@@ -83,6 +83,7 @@ export default function ObjectiveDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trainingFileInputRef = useRef<HTMLInputElement>(null);
   const sopFileInputRef = useRef<HTMLInputElement>(null);
+  const debouncedSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // State for adding YouTube video
   const [showAddVideo, setShowAddVideo] = useState(false);
@@ -115,6 +116,8 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingEvidence, setIsGeneratingEvidence] = useState(false);
   const [generatedEvidenceList, setGeneratedEvidenceList] = useState<string[]>([]);
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
+  const [isSavingInterpretation, setIsSavingInterpretation] = useState(false);
+  const [interpretationSaveSuccess, setInterpretationSaveSuccess] = useState(false);
 
   // State for Infographic Generator
   const [isGeneratingInfographic, setIsGeneratingInfographic] = useState(false);
@@ -284,6 +287,116 @@ export default function ObjectiveDetailPage() {
     loadSavedEvidences();
   }, [objective?.code]);
 
+  // Load suggested registers when objective changes
+  // Note: This must be before early returns to maintain hook order
+  useEffect(() => {
+    if (!objective?.code) return;
+
+    const objectiveCode = objective.code;
+    const prefix = objectiveCode.substring(0, 3).toUpperCase();
+
+    // Register suggestions by chapter prefix
+    const registerSuggestions: Record<string, Array<{id: string; name: string; description: string; htmlContent: string; isGenerated: boolean}>> = {
+      'AAC': [
+        { id: 'reg-aac-1', name: 'Patient Registration Register', description: 'Register of all patients with UHID, demographics, and admission details', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-2', name: 'Admission Register', description: 'Daily admission register with patient details and bed allocation', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-3', name: 'Discharge Register', description: 'Patient discharge details with outcomes and follow-up instructions', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-4', name: 'Transfer Register', description: 'Inter-department and external transfer records', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-5', name: 'Bed Occupancy Register', description: 'Daily bed census and occupancy tracking', htmlContent: '', isGenerated: false },
+      ],
+      'COP': [
+        { id: 'reg-cop-1', name: 'Patient Assessment Register', description: 'Initial and ongoing patient assessment records', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-2', name: 'Clinical Care Plan Register', description: 'Individualized care plans for patients', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-3', name: 'Nursing Care Register', description: 'Daily nursing care documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-4', name: 'Patient Education Register', description: 'Patient and family education records', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-5', name: 'Consent Register', description: 'All consent forms obtained from patients', htmlContent: '', isGenerated: false },
+      ],
+      'MOM': [
+        { id: 'reg-mom-1', name: 'Drug Inventory Register', description: 'Stock register for all medications', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-2', name: 'High Alert Medication Register', description: 'Tracking of high-alert and look-alike drugs', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-3', name: 'Narcotic Drug Register', description: 'Controlled substance tracking and accountability', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-4', name: 'Adverse Drug Reaction Register', description: 'ADR reporting and monitoring', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-5', name: 'Emergency Drug Register', description: 'Emergency medication usage tracking', htmlContent: '', isGenerated: false },
+      ],
+      'PRE': [
+        { id: 'reg-pre-1', name: 'Patient Rights Register', description: 'Documentation of patient rights information provided', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-2', name: 'Complaint Register', description: 'Patient complaints and grievance handling', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-3', name: 'Feedback Register', description: 'Patient feedback and satisfaction records', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-4', name: 'Informed Consent Register', description: 'All informed consents obtained', htmlContent: '', isGenerated: false },
+      ],
+      'HIC': [
+        { id: 'reg-hic-1', name: 'Hand Hygiene Audit Register', description: 'Hand hygiene compliance monitoring', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-2', name: 'Hospital Acquired Infection Register', description: 'HAI surveillance and tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-3', name: 'Biomedical Waste Register', description: 'BMW generation and disposal tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-4', name: 'Sterilization Register', description: 'CSSD sterilization records', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-5', name: 'Needle Stick Injury Register', description: 'NSI incidents and post-exposure prophylaxis', htmlContent: '', isGenerated: false },
+      ],
+      'FMS': [
+        { id: 'reg-fms-1', name: 'Equipment Maintenance Register', description: 'Preventive and breakdown maintenance records', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-2', name: 'Fire Safety Drill Register', description: 'Mock drill records and observations', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-3', name: 'Incident Register', description: 'All facility-related incidents', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-4', name: 'Calibration Register', description: 'Equipment calibration tracking', htmlContent: '', isGenerated: false },
+      ],
+      'HRM': [
+        { id: 'reg-hrm-1', name: 'Staff Attendance Register', description: 'Daily attendance and leave tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-2', name: 'Training Register', description: 'Staff training records and certifications', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-3', name: 'Credential Verification Register', description: 'License and credential verification', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-4', name: 'Performance Appraisal Register', description: 'Annual performance reviews', htmlContent: '', isGenerated: false },
+      ],
+      'QI': [
+        { id: 'reg-qi-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions tracking with root cause analysis, corrective action, preventive action, responsible person, target date, completion date, and verification', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-3', name: 'Near Miss Register', description: 'Near miss events reporting', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-4', name: 'Sentinel Event Register', description: 'Sentinel events and RCA documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-5', name: 'Patient Safety Incident Register', description: 'All patient safety incidents', htmlContent: '', isGenerated: false },
+      ],
+      'PSQ': [
+        { id: 'reg-psq-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking with trend analysis', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions with root cause (5-Why/Fishbone), corrective action, preventive action, responsible person, target date, completion date, and verification status', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-3', name: 'Patient Safety Incident Register', description: 'All patient safety incidents with severity classification', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-4', name: 'Near Miss Register', description: 'Near miss events reporting and analysis', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-5', name: 'Sentinel Event Register', description: 'Sentinel events with RCA documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-6', name: 'Risk Assessment Register', description: 'Proactive risk assessments (FMEA)', htmlContent: '', isGenerated: false },
+      ],
+      'ROM': [
+        { id: 'reg-rom-1', name: 'Management Review Minutes Register', description: 'Management review meeting records', htmlContent: '', isGenerated: false },
+        { id: 'reg-rom-2', name: 'Strategic Plan Review Register', description: 'Annual strategic plan tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-rom-3', name: 'CAPA Register', description: 'Management-level corrective actions from audit findings', htmlContent: '', isGenerated: false },
+      ],
+      'IMS': [
+        { id: 'reg-ims-1', name: 'Medical Records Audit Register', description: 'Medical record completeness audits', htmlContent: '', isGenerated: false },
+        { id: 'reg-ims-2', name: 'Document Control Register', description: 'Controlled document master list', htmlContent: '', isGenerated: false },
+        { id: 'reg-ims-3', name: 'IT Incident Register', description: 'IT downtime and incident tracking', htmlContent: '', isGenerated: false },
+      ],
+    };
+
+    const universalCAPARegister = {
+      id: 'reg-universal-capa',
+      name: 'CAPA Register (Master)',
+      description: 'Master Corrective and Preventive Actions register with: Finding description, Root cause analysis (5-Why/Fishbone), Corrective action taken, Preventive measures, Responsible person, Target date, Completion date, Verification status',
+      htmlContent: '',
+      isGenerated: false,
+    };
+
+    let registers = registerSuggestions[prefix] || [];
+
+    if (registers.length === 0) {
+      registers = [
+        { id: 'reg-gen-1', name: 'Activity Register', description: `Register for ${objective?.title || 'activities'}`, htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-2', name: 'Compliance Checklist Register', description: 'Daily/weekly compliance tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-3', name: 'Audit Register', description: 'Internal audit findings and actions', htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-4', name: 'Training Record Register', description: 'Related training documentation', htmlContent: '', isGenerated: false },
+      ];
+    }
+
+    const hasCAPA = registers.some(r => r.name.toLowerCase().includes('capa'));
+    if (!hasCAPA) {
+      registers = [universalCAPARegister, ...registers];
+    }
+
+    setSuggestedRegisters(registers);
+  }, [objective?.code, objective?.title]);
+
   // Show loading state while data is being fetched
   if (isLoadingFromSupabase || chapters.length === 0) {
     return (
@@ -339,9 +452,6 @@ export default function ObjectiveDetailPage() {
       setSaveStatus('error');
     }
   };
-
-  // Debounced save to Supabase
-  const debouncedSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFieldChange = (field: string, value: string | Status | Priority | ElementCategory) => {
     // Update local store immediately
@@ -667,7 +777,7 @@ Prefer Indian healthcare context videos. Return ONLY valid JSON array.`;
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 4096,
           messages: [
             {
@@ -734,7 +844,7 @@ Format it professionally with clear sections and bullet points.`,
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 2048,
           messages: [
             {
@@ -1411,7 +1521,7 @@ Generate complete, ready-to-use content/template for this evidence in ENGLISH ON
               'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-3-5-sonnet-20241022',
               max_tokens: 4096,
               messages: [{ role: 'user', content: `${contentPrompt}\n\n${userMessage}` }],
             }),
@@ -1603,125 +1713,6 @@ Generate a complete, professional HTML document for the above requirement. Inclu
 
     setIsGeneratingCustomEvidence(false);
   };
-
-  // Get suggested registers based on objective
-  const getSuggestedRegistersForObjective = (): RegisterItem[] => {
-    const objectiveCode = objective?.code || '';
-
-    // Common registers for different NABH objectives
-    const registerSuggestions: Record<string, RegisterItem[]> = {
-      'AAC': [
-        { id: 'reg-aac-1', name: 'Patient Registration Register', description: 'Register of all patients with UHID, demographics, and admission details', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-2', name: 'Admission Register', description: 'Daily admission register with patient details and bed allocation', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-3', name: 'Discharge Register', description: 'Patient discharge details with outcomes and follow-up instructions', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-4', name: 'Transfer Register', description: 'Inter-department and external transfer records', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-5', name: 'Bed Occupancy Register', description: 'Daily bed census and occupancy tracking', htmlContent: '', isGenerated: false },
-      ],
-      'COP': [
-        { id: 'reg-cop-1', name: 'Patient Assessment Register', description: 'Initial and ongoing patient assessment records', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-2', name: 'Clinical Care Plan Register', description: 'Individualized care plans for patients', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-3', name: 'Nursing Care Register', description: 'Daily nursing care documentation', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-4', name: 'Patient Education Register', description: 'Patient and family education records', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-5', name: 'Consent Register', description: 'All consent forms obtained from patients', htmlContent: '', isGenerated: false },
-      ],
-      'MOM': [
-        { id: 'reg-mom-1', name: 'Drug Inventory Register', description: 'Stock register for all medications', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-2', name: 'High Alert Medication Register', description: 'Tracking of high-alert and look-alike drugs', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-3', name: 'Narcotic Drug Register', description: 'Controlled substance tracking and accountability', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-4', name: 'Adverse Drug Reaction Register', description: 'ADR reporting and monitoring', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-5', name: 'Emergency Drug Register', description: 'Emergency medication usage tracking', htmlContent: '', isGenerated: false },
-      ],
-      'PRE': [
-        { id: 'reg-pre-1', name: 'Patient Rights Register', description: 'Documentation of patient rights information provided', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-2', name: 'Complaint Register', description: 'Patient complaints and grievance handling', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-3', name: 'Feedback Register', description: 'Patient feedback and satisfaction records', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-4', name: 'Informed Consent Register', description: 'All informed consents obtained', htmlContent: '', isGenerated: false },
-      ],
-      'HIC': [
-        { id: 'reg-hic-1', name: 'Hand Hygiene Audit Register', description: 'Hand hygiene compliance monitoring', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-2', name: 'Hospital Acquired Infection Register', description: 'HAI surveillance and tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-3', name: 'Biomedical Waste Register', description: 'BMW generation and disposal tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-4', name: 'Sterilization Register', description: 'CSSD sterilization records', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-5', name: 'Needle Stick Injury Register', description: 'NSI incidents and post-exposure prophylaxis', htmlContent: '', isGenerated: false },
-      ],
-      'FMS': [
-        { id: 'reg-fms-1', name: 'Equipment Maintenance Register', description: 'Preventive and breakdown maintenance records', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-2', name: 'Fire Safety Drill Register', description: 'Mock drill records and observations', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-3', name: 'Incident Register', description: 'All facility-related incidents', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-4', name: 'Calibration Register', description: 'Equipment calibration tracking', htmlContent: '', isGenerated: false },
-      ],
-      'HRM': [
-        { id: 'reg-hrm-1', name: 'Staff Attendance Register', description: 'Daily attendance and leave tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-2', name: 'Training Register', description: 'Staff training records and certifications', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-3', name: 'Credential Verification Register', description: 'License and credential verification', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-4', name: 'Performance Appraisal Register', description: 'Annual performance reviews', htmlContent: '', isGenerated: false },
-      ],
-      'QI': [
-        { id: 'reg-qi-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions tracking with root cause analysis, corrective action, preventive action, responsible person, target date, completion date, and verification', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-3', name: 'Near Miss Register', description: 'Near miss events reporting', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-4', name: 'Sentinel Event Register', description: 'Sentinel events and RCA documentation', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-5', name: 'Patient Safety Incident Register', description: 'All patient safety incidents', htmlContent: '', isGenerated: false },
-      ],
-      'PSQ': [
-        { id: 'reg-psq-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking with trend analysis', htmlContent: '', isGenerated: false },
-        { id: 'reg-psq-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions with root cause (5-Why/Fishbone), corrective action, preventive action, responsible person, target date, completion date, and verification status', htmlContent: '', isGenerated: false },
-        { id: 'reg-psq-3', name: 'Patient Safety Incident Register', description: 'All patient safety incidents with severity classification', htmlContent: '', isGenerated: false },
-        { id: 'reg-psq-4', name: 'Near Miss Register', description: 'Near miss events reporting and analysis', htmlContent: '', isGenerated: false },
-        { id: 'reg-psq-5', name: 'Sentinel Event Register', description: 'Sentinel events with RCA documentation', htmlContent: '', isGenerated: false },
-        { id: 'reg-psq-6', name: 'Risk Assessment Register', description: 'Proactive risk assessments (FMEA)', htmlContent: '', isGenerated: false },
-      ],
-      'ROM': [
-        { id: 'reg-rom-1', name: 'Management Review Minutes Register', description: 'Management review meeting records', htmlContent: '', isGenerated: false },
-        { id: 'reg-rom-2', name: 'Strategic Plan Review Register', description: 'Annual strategic plan tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-rom-3', name: 'CAPA Register', description: 'Management-level corrective actions from audit findings', htmlContent: '', isGenerated: false },
-      ],
-      'IMS': [
-        { id: 'reg-ims-1', name: 'Medical Records Audit Register', description: 'Medical record completeness audits', htmlContent: '', isGenerated: false },
-        { id: 'reg-ims-2', name: 'Document Control Register', description: 'Controlled document master list', htmlContent: '', isGenerated: false },
-        { id: 'reg-ims-3', name: 'IT Incident Register', description: 'IT downtime and incident tracking', htmlContent: '', isGenerated: false },
-      ],
-    };
-    
-    // Universal CAPA register available for all chapters
-    const universalCAPARegister: RegisterItem = {
-      id: 'reg-universal-capa',
-      name: 'CAPA Register (Master)',
-      description: 'Master Corrective and Preventive Actions register with: Finding description, Root cause analysis (5-Why/Fishbone), Corrective action taken, Preventive measures, Responsible person, Target date, Completion date, Verification status',
-      htmlContent: '',
-      isGenerated: false,
-    };
-
-    // Find matching registers based on objective code prefix
-    const prefix = objectiveCode.substring(0, 3).toUpperCase();
-    let registers = registerSuggestions[prefix] || [];
-
-    // If no exact match, provide generic registers
-    if (registers.length === 0) {
-      registers = [
-        { id: 'reg-gen-1', name: 'Activity Register', description: `Register for ${objective?.title || 'activities'}`, htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-2', name: 'Compliance Checklist Register', description: 'Daily/weekly compliance tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-3', name: 'Audit Register', description: 'Internal audit findings and actions', htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-4', name: 'Training Record Register', description: 'Related training documentation', htmlContent: '', isGenerated: false },
-      ];
-    }
-    
-    // Always add Universal CAPA Register at the beginning if not already present
-    const hasCAPA = registers.some(r => r.name.toLowerCase().includes('capa'));
-    if (!hasCAPA) {
-      registers = [universalCAPARegister, ...registers];
-    }
-
-    return registers;
-  };
-
-  // Load suggested registers when objective changes
-  useEffect(() => {
-    if (objective?.code) {
-      const registers = getSuggestedRegistersForObjective();
-      setSuggestedRegisters(registers);
-    }
-  }, [objective?.code]);
 
   // Toggle register selection
   const handleToggleRegister = (registerId: string) => {
@@ -2065,7 +2056,7 @@ Generate complete HTML with embedded CSS. Do NOT use markdown or code blocks. St
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1024,
           messages: [
             {
@@ -2102,16 +2093,9 @@ Provide only the Hindi explanation, no English text. The explanation should be c
     }
   };
 
-  // Handle interpretation change with debounced Hindi generation
+  // Handle interpretation change - saves to interpretations2 (user-editable field)
   const handleInterpretationChange = (newInterpretation: string) => {
-    handleFieldChange('description', newInterpretation);
-  };
-
-  // Handle interpretation save (blur event) to trigger Hindi generation
-  const handleInterpretationBlur = async () => {
-    if (objective.description && objective.description.trim()) {
-      await handleGenerateHindiExplanation(objective.interpretation || objective.description);
-    }
+    handleFieldChange('interpretations2', newInterpretation);
   };
 
   // Save infographic to Supabase using the objective_edits table
@@ -2452,23 +2436,61 @@ DESIGN REQUIREMENTS:
             <TextField
               fullWidth
               label="Interpretation"
-              value={objective.description}
+              value={objective.interpretations2 ?? objective.interpretation ?? ''}
               onChange={(e) => handleInterpretationChange(e.target.value)}
-              onBlur={handleInterpretationBlur}
               multiline
               minRows={3}
               size="small"
               sx={expandableTextFieldSx}
-              helperText="Hindi explanation will be auto-generated when you finish editing"
+              helperText="Edit and click Save to store your interpretation"
             />
-            {isGeneratingHindi && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                <CircularProgress size={16} />
-                <Typography variant="caption" color="text.secondary">
-                  Generating Hindi explanation...
-                </Typography>
-              </Box>
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : <Icon>save</Icon>}
+                disabled={isSavingInterpretation}
+                onClick={async () => {
+                  setIsSavingInterpretation(true);
+                  try {
+                    const result = await saveObjectiveToSupabase(chapter.id, objective);
+                    if (result.success) {
+                      setInterpretationSaveSuccess(true);
+                      setTimeout(() => setInterpretationSaveSuccess(false), 3000);
+                      // Also generate Hindi explanation
+                      const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
+                      if (currentText.trim()) {
+                        await handleGenerateHindiExplanation(currentText);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error saving interpretation:', error);
+                  } finally {
+                    setIsSavingInterpretation(false);
+                  }
+                }}
+                sx={{ minWidth: 100 }}
+              >
+                {isSavingInterpretation ? 'Saving...' : 'Save'}
+              </Button>
+              {interpretationSaveSuccess && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'success.main' }}>
+                  <Icon color="success">check_circle</Icon>
+                  <Typography variant="caption" color="success.main" fontWeight={600}>
+                    Saved!
+                  </Typography>
+                </Box>
+              )}
+              {isGeneratingHindi && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="caption" color="text.secondary">
+                    Generating Hindi...
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
 
           {/* Hindi Explanation Section */}

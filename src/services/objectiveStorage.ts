@@ -3,7 +3,7 @@ import type { ObjectiveElement, NABHChapter, NABHStandard, NABHObjectiveElement,
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Type for row data from Supabase
+// Type for row data from Supabase (nabh_objective_edits table)
 interface ObjectiveEditRow {
   id: string;
   objective_code: string;
@@ -27,6 +27,7 @@ interface ObjectiveEditRow {
   training_materials: unknown[] | null;
   sop_documents: unknown[] | null;
   auditor_priority_items: string[] | null; // Evidence items marked as priority for auditors
+  interpretations2: string | null; // User-editable interpretation field
   created_at: string;
   updated_at: string;
 }
@@ -134,6 +135,7 @@ export async function saveObjectiveToSupabase(
       training_materials: objective.trainingMaterials || [],
       sop_documents: objective.sopDocuments || [],
       auditor_priority_items: objective.auditorPriorityItems || [],
+      interpretations2: objective.interpretations2 || null,
     };
 
     console.log('Saving to Supabase, payload size:', JSON.stringify(editData).length, 'bytes');
@@ -161,7 +163,7 @@ export async function saveObjectiveToSupabase(
     
     // Also update the normalized nabh_objective_elements table if we have YouTube videos or training materials
     // This ensures the data is available when loading from the normalized schema
-    if (objective.youtubeVideos?.length || objective.trainingMaterials?.length || objective.sopDocuments?.length || objective.hindiExplanation) {
+    if (objective.youtubeVideos?.length || objective.trainingMaterials?.length || objective.sopDocuments?.length || objective.hindiExplanation || objective.interpretation || objective.interpretations2) {
       try {
         // First, find the element ID by code
         const [chapterCode, stdNum, elemNum] = objective.code.split('.');
@@ -190,10 +192,21 @@ export async function saveObjectiveToSupabase(
             if (objective.trainingMaterials?.length) normalizedUpdate.training_materials = objective.trainingMaterials;
             if (objective.sopDocuments?.length) normalizedUpdate.sop_documents = objective.sopDocuments;
             if (objective.hindiExplanation) normalizedUpdate.hindi_explanation = objective.hindiExplanation;
+            if (objective.interpretation) normalizedUpdate.interpretation = objective.interpretation;
+            // Always save interpretations2 (user edits)
+            if (objective.interpretations2 !== undefined) {
+              normalizedUpdate.interpretations2 = objective.interpretations2 || null;
+            }
             if (objective.notes) normalizedUpdate.notes = objective.notes;
             if (objective.assignee) normalizedUpdate.assignee = objective.assignee;
             if (objective.status) normalizedUpdate.status = objective.status;
-            
+
+            console.log('Saving to nabh_objective_elements:', {
+              elementId: matchingElement.id,
+              interpretations2: objective.interpretations2,
+              normalizedUpdate
+            });
+
             await fetch(
               `${SUPABASE_URL}/rest/v1/nabh_objective_elements?id=eq.${matchingElement.id}`,
               {
@@ -280,6 +293,7 @@ export async function loadObjectiveFromSupabase(
       trainingMaterials: (data.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
       sopDocuments: (data.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
       auditorPriorityItems: (data.auditor_priority_items as string[]) ?? [],
+      interpretations2: data.interpretations2 ?? undefined,
     };
 
     return { success: true, data: objectiveData };
@@ -342,6 +356,7 @@ export async function loadAllObjectiveEditsFromSupabase(): Promise<{
           trainingMaterials: (row.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
           sopDocuments: (row.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
           auditorPriorityItems: (row.auditor_priority_items as string[]) ?? [],
+          interpretations2: row.interpretations2 ?? undefined,
         };
       }
     }
