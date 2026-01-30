@@ -464,7 +464,7 @@ Fill in all sections with relevant content based on the NABH objective element d
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 8192,
           messages: [
             {
@@ -622,7 +622,7 @@ Fill in the notice body with appropriate content explaining why this training is
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 4096,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -765,7 +765,7 @@ Generate the complete HTML with all 20 attendance rows filled in with empty cell
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 4096,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -949,7 +949,7 @@ Generate the complete HTML with all ${mcqQuestionCount} MCQ questions filled in 
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 8192,
           messages: [{ role: 'user', content: prompt }],
         }),

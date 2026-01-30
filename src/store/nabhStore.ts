@@ -3,6 +3,31 @@ import { persist } from 'zustand/middleware';
 import type { Chapter, ObjectiveElement, Status, ElementCategory, ChapterType } from '../types/nabh';
 import { loadAllObjectiveEditsFromSupabase, loadChaptersFromSupabase, loadAllNormalizedData } from '../services/objectiveStorage';
 
+// Natural sort for objective codes like "COP.1.a", "COP.10.b"
+// Handles numeric parts correctly: COP.1 < COP.2 < COP.10
+function naturalSortObjectiveCode(a: string, b: string): number {
+  const partsA = a.split('.');
+  const partsB = b.split('.');
+
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const partA = partsA[i] || '';
+    const partB = partsB[i] || '';
+
+    const numA = parseInt(partA, 10);
+    const numB = parseInt(partB, 10);
+
+    // Both are numbers - compare numerically
+    if (!isNaN(numA) && !isNaN(numB)) {
+      if (numA !== numB) return numA - numB;
+    } else {
+      // At least one is not a number - compare alphabetically
+      const cmp = partA.localeCompare(partB);
+      if (cmp !== 0) return cmp;
+    }
+  }
+  return 0;
+}
+
 // Helper function for chapter type (can be removed if not needed)
 // Note: Chapter types could also be stored in nabh_chapters table if needed
 
@@ -223,7 +248,12 @@ export const useNABHStore = create<NABHStore>()(
       loadFromNormalizedSchema: async () => {
         set({ isLoadingFromSupabase: true });
         try {
-          const result = await loadAllNormalizedData();
+          // Load normalized schema data and edits in parallel
+          const [result, editsResult] = await Promise.all([
+            loadAllNormalizedData(),
+            loadAllObjectiveEditsFromSupabase()
+          ]);
+
           if (!result.success || !result.data) {
             console.error('Failed to load normalized data:', result.error);
             set({ chapters: [], isLoadingFromSupabase: false });
@@ -231,57 +261,66 @@ export const useNABHStore = create<NABHStore>()(
           }
 
           const { chapters: nabhChapters, standards, elements } = result.data;
-          
+
+          // Create a map of edits by objective code for quick lookup
+          const editsMap = editsResult.success && editsResult.data ? editsResult.data : {};
+
           // Build chapters structure from normalized data
           const chapters: Chapter[] = nabhChapters.map(nabhChapter => {
             // Get standards for this chapter
             const chapterStandards = standards.filter(s => s.chapter_id === nabhChapter.id);
-            
+
             // Get all elements for this chapter (across all standards)
             const chapterElements: ObjectiveElement[] = [];
-            
+
             chapterStandards.forEach(standard => {
               const standardElements = elements.filter(e => e.standard_id === standard.id);
-              
+
               standardElements.forEach(element => {
+                const objectiveCode = `${nabhChapter.name}.${standard.standard_number}.${element.element_number}`;
+                // Get any edits for this objective from nabh_objective_edits
+                const edits = editsMap[objectiveCode] || {};
+
                 const objective: ObjectiveElement = {
                   id: element.id,
-                  code: `${nabhChapter.name}.${standard.standard_number}.${element.element_number}`,
+                  code: objectiveCode,
                   title: element.description || '',
                   description: element.description,
                   interpretation: element.interpretation || '',
-                  hindiExplanation: '',
+                  // Prefer edits.interpretations2 over element.interpretations2
+                  interpretations2: edits.interpretations2 || element.interpretations2 || '',
+                  hindiExplanation: edits.hindiExplanation || '',
                   category: element.is_core ? 'Core' : 'Commitment',
                   isCore: element.is_core,
-                  evidencesList: element.evidence_links || '',
-                  evidenceLinks: element.evidence_links || '',
-                  evidenceFiles: [],
-                  youtubeVideos: (element as any).youtube_videos || [],
-                  trainingMaterials: (element as any).training_materials || [],
-                  sopDocuments: (element as any).sop_documents || [],
-                  auditorPriorityItems: [],
-                  priority: element.is_core ? 'CORE' : '',
-                  assignee: element.assignee || '',
-                  status: element.status === 'Not Started' ? 'Not started' : element.status === 'In Progress' ? 'In progress' : element.status as Status,
-                  startDate: '',
-                  endDate: '',
-                  deliverable: '',
-                  notes: element.notes || '',
-                  infographicSvg: element.infographic_svg,
-                  infographicDataUrl: element.infographic_data_url,
+                  evidencesList: edits.evidencesList || element.evidence_links || '',
+                  evidenceLinks: edits.evidenceLinks || element.evidence_links || '',
+                  evidenceFiles: edits.evidenceFiles || [],
+                  youtubeVideos: edits.youtubeVideos || (element as any).youtube_videos || [],
+                  trainingMaterials: edits.trainingMaterials || (element as any).training_materials || [],
+                  sopDocuments: edits.sopDocuments || (element as any).sop_documents || [],
+                  auditorPriorityItems: edits.auditorPriorityItems || [],
+                  priority: element.is_core ? 'CORE' : (edits.priority || ''),
+                  assignee: edits.assignee || element.assignee || '',
+                  status: edits.status || (element.status === 'Not Started' ? 'Not started' : element.status === 'In Progress' ? 'In progress' : element.status as Status),
+                  startDate: edits.startDate || '',
+                  endDate: edits.endDate || '',
+                  deliverable: edits.deliverable || '',
+                  notes: edits.notes || element.notes || '',
+                  infographicSvg: edits.infographicSvg || element.infographic_svg,
+                  infographicDataUrl: edits.infographicDataUrl || element.infographic_data_url,
                 };
-                
+
                 chapterElements.push(objective);
               });
             });
-            
+
             return {
               id: nabhChapter.name.toLowerCase(),
               code: nabhChapter.name,
               name: nabhChapter.name,
               fullName: nabhChapter.description,
               type: getChapterType(nabhChapter.name) as ChapterType,
-              objectives: chapterElements.sort((a, b) => a.code.localeCompare(b.code)),
+              objectives: chapterElements.sort((a, b) => naturalSortObjectiveCode(a.code, b.code)),
               standards: chapterStandards.map(s => ({
                 code: s.standard_number,
                 title: s.name,
@@ -290,14 +329,14 @@ export const useNABHStore = create<NABHStore>()(
               })),
             };
           });
-          
+
           // Sort chapters by chapter_number
           chapters.sort((a, b) => {
             const aChapter = nabhChapters.find(c => c.name === a.code);
             const bChapter = nabhChapters.find(c => c.name === b.code);
             return (aChapter?.chapter_number || 0) - (bChapter?.chapter_number || 0);
           });
-          
+
           set({ chapters, isLoadingFromSupabase: false });
         } catch (error) {
           console.error('Error loading normalized data:', error);

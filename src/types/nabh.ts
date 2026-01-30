@@ -55,7 +55,8 @@ export interface ObjectiveElement {
   code: string;
   title: string;
   description: string;          // NABH SHCO 3rd Edition description
-  interpretation: string;       // AI-generated interpretation/guidance
+  interpretation: string;       // AI-generated interpretation/guidance (read-only)
+  interpretations2?: string;    // User-editable interpretation field
   hindiExplanation: string;     // Hindi explanation for staff
   category: ElementCategory;    // Core, Commitment, Achievement, Excellence
   isCore: boolean;              // Quick check for core elements
@@ -103,6 +104,7 @@ export interface NABHObjectiveElement {
   element_number: string;
   description: string;
   interpretation: string;
+  interpretations2?: string;  // User-editable interpretation saved separately
   is_core: boolean;
   category?: ElementCategory;  // Commitment, Core, Achievement, Excellence
   status: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
