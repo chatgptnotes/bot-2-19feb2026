@@ -148,11 +148,14 @@ export default function ObjectiveList() {
                 </TableCell>
               </TableRow>
             ) : (
-              objectives.map((obj) => (
+              objectives.map((obj, index) => (
                 <TableRow
                 key={obj.id}
                 hover
-                sx={{ cursor: 'pointer' }}
+                sx={{ 
+                  cursor: 'pointer',
+                  backgroundColor: index % 2 === 0 ? 'inherit' : 'grey.100',
+                }}
                 onClick={() => handleViewDetail(obj)}
               >
                 <TableCell>

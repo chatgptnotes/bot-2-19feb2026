@@ -32,6 +32,8 @@ import FormGroup from '@mui/material/FormGroup';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Snackbar from '@mui/material/Snackbar';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
 import { ASSIGNEE_OPTIONS, HOSPITAL_INFO, getNABHCoordinator } from '../config/hospitalConfig';
@@ -54,6 +56,7 @@ import {
   type InfographicTemplate,
   type ColorScheme,
 } from '../services/infographicGenerator';
+import { generateGeminiInfographic } from '../services/geminiService';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -134,6 +137,7 @@ export default function ObjectiveDetailPage() {
   const [infographicSaveStatus, setInfographicSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [selectedInfographicTemplate, setSelectedInfographicTemplate] = useState<InfographicTemplate>('modern-poster');
   const [selectedColorScheme, setSelectedColorScheme] = useState<ColorScheme>('healthcare-blue');
+  const [infographicSource, setInfographicSource] = useState<'template' | 'gemini'>('template');
 
   // State for Supabase persistence
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -2147,8 +2151,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
       // Extract key compliance points from the description
       const keyPoints = extractKeyPoints(objective.description);
       
-      // Generate professional SVG infographic
-      const svgContent = generateInfographic({
+      const config = {
         title: objective.title || objective.code,
         titleHindi: objective.hindiExplanation ? objective.hindiExplanation.substring(0, 80) : undefined,
         code: objective.code,
@@ -2162,7 +2165,17 @@ Provide only the Hindi explanation, no English text. The explanation should be c
         template: selectedInfographicTemplate,
         colorScheme: selectedColorScheme,
         showIcons: true,
-      });
+      };
+
+      let svgContent: string;
+
+      if (infographicSource === 'gemini') {
+        // Use Gemini AI to generate the infographic
+        svgContent = await generateGeminiInfographic(config);
+      } else {
+        // Use standard template generator
+        svgContent = generateInfographic(config);
+      }
 
       // Convert SVG to PNG data URL for better compatibility
       const pngDataUrl = await svgToPngDataUrl(svgContent, 2);
@@ -2495,6 +2508,27 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 </Typography>
               </Alert>
               
+              {/* Generator Source Selection */}
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                <ToggleButtonGroup
+                  value={infographicSource}
+                  exclusive
+                  onChange={(_, value) => value && setInfographicSource(value)}
+                  aria-label="infographic source"
+                  size="small"
+                  color="primary"
+                >
+                  <ToggleButton value="template" sx={{ px: 3 }}>
+                    <Icon sx={{ mr: 1, fontSize: 18 }}>dashboard</Icon>
+                    Standard Templates
+                  </ToggleButton>
+                  <ToggleButton value="gemini" sx={{ px: 3 }}>
+                    <Icon sx={{ mr: 1, fontSize: 18 }}>auto_awesome</Icon>
+                    Gemini AI (v3 Preview)
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
               {/* Template & Color Scheme Selection */}
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -2574,13 +2608,13 @@ Provide only the Hindi explanation, no English text. The explanation should be c
               <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Button
                   variant="contained"
-                  color="info"
+                  color={infographicSource === 'gemini' ? "secondary" : "info"}
                   startIcon={isGeneratingInfographic ? <CircularProgress size={16} color="inherit" /> : <Icon>auto_awesome</Icon>}
                   onClick={handleGenerateInfographic}
                   disabled={isGeneratingInfographic || !objective.description}
                   sx={{ minWidth: 200 }}
                 >
-                  {isGeneratingInfographic ? 'Generating...' : 'Generate Infographic'}
+                  {isGeneratingInfographic ? 'Generating...' : `Generate with ${infographicSource === 'gemini' ? 'Gemini AI' : 'Templates'}`}
                 </Button>
                 {(generatedInfographicSvg || objective.infographicDataUrl) && (
                   <>
