@@ -12,7 +12,7 @@ export const testGeminiConnection = async (customKey?: string): Promise<string> 
     // If this works, the key is good.
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const result = await model.generateContent('Hello');
+    await model.generateContent('Hello');
     return 'Success! gemini-1.5-flash is available.';
   } catch (error: any) {
     return `Error: ${error.message}`;
