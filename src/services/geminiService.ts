@@ -9,10 +9,8 @@ export const generateGeminiInfographic = async (config: InfographicConfig): Prom
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using the latest capable model. 
-  // Note: "Gemini 3" isn't a standard public API model tag yet, 
-  // so we use the most advanced 1.5 Pro or 2.0 Flash model available.
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+  // Using gemini-1.5-flash which is widely available and fast
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `
     You are an expert graphic designer and SVG artist.
