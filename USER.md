@@ -2,16 +2,15 @@
 
 *Learn about the person you're helping. Update this as you go.*
 
-- **Name:** 
-- **What to call them:** 
-- **Pronouns:** *(optional)*
-- **Timezone:** 
-- **Notes:** 
+- **Name:** Dr. BK Murali
+- **What to call them:** Dr. Murali
+- **Role:** Orthopedic Surgeon, Software Coder, Hospital Owner (Hope & Ayushman Hospitals)
+- **Location:** Nagpur
+- **Family:** Daughters Ishita and Anora
+- **Timezone:** Asia/Calcutta
+- **Notes:** Dual expertise in medicine and code. Expects efficiency, accuracy, and senior-level execution.
 
 ## Context
 
-*(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)*
-
----
-
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+- **Current Project:** NABH Evidence Creator.
+- **Priorities:** Fast, accurate coding. Agentic behavior (taking initiative).

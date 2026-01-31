@@ -3751,10 +3751,50 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                   </Grid>
                 )}
 
+                {/* Action Buttons */}
+                {!showAddVideo && (
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={isSearchingYouTube ? <CircularProgress size={20} color="inherit" /> : <Icon>youtube_searched_for</Icon>}
+                      onClick={handleSearchYouTube}
+                      size="medium"
+                      disabled={isSearchingYouTube}
+                      sx={{ 
+                        flex: 1,
+                        minWidth: 250,
+                        fontWeight: 600,
+                        boxShadow: 2,
+                        py: 1.5,
+                        '&:hover': { boxShadow: 4, bgcolor: 'error.700' }
+                      }}
+                    >
+                      {isSearchingYouTube ? 'Searching YouTube...' : 'Search NABH Training Videos'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Icon>add</Icon>}
+                      onClick={() => setShowAddVideo(true)}
+                      size="medium"
+                      sx={{ minWidth: 180, py: 1.5 }}
+                    >
+                      Add Video Manually
+                    </Button>
+                    <Box sx={{ width: '100%', mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Icon fontSize="small" color="info">info</Icon>
+                        Use the Search button to find and add official NABH training videos directly.
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
                 {/* Add Video Form */}
-                {showAddVideo ? (
-                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                {showAddVideo && (
+                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'grey.300' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Icon color="error">add_circle</Icon>
                       Add YouTube Video
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -3764,6 +3804,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         value={newVideoTitle}
                         onChange={(e) => setNewVideoTitle(e.target.value)}
                         size="small"
+                        placeholder="e.g., NABH COP Chapter Overview"
                       />
                       <TextField
                         fullWidth
@@ -3772,25 +3813,18 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                         size="small"
                         placeholder="https://www.youtube.com/watch?v=..."
+                        helperText="Paste the full YouTube URL here"
                       />
                       <TextField
                         fullWidth
-                        label="Interpretation (optional)"
+                        label="Description (optional)"
                         value={newVideoDescription}
                         onChange={(e) => setNewVideoDescription(e.target.value)}
                         size="small"
                         multiline
                         rows={2}
                       />
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={handleAddVideo}
-                          disabled={!newVideoTitle.trim() || !newVideoUrl.trim()}
-                        >
-                          Add Video
-                        </Button>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                         <Button
                           variant="outlined"
                           size="small"
@@ -3798,39 +3832,17 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         >
                           Cancel
                         </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={handleAddVideo}
+                          disabled={!newVideoTitle.trim() || !newVideoUrl.trim()}
+                          startIcon={<Icon>save</Icon>}
+                        >
+                          Save Video
+                        </Button>
                       </Box>
                     </Box>
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Icon>add</Icon>}
-                      onClick={() => setShowAddVideo(true)}
-                      size="medium"
-                      sx={{ minWidth: 180 }}
-                    >
-                      Add YouTube Video
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      startIcon={isSearchingYouTube ? <CircularProgress size={20} color="inherit" /> : <Icon>youtube_searched_for</Icon>}
-                      onClick={handleSearchYouTube}
-                      size="medium"
-                      disabled={isSearchingYouTube}
-                      sx={{ 
-                        minWidth: 250,
-                        fontWeight: 600,
-                        boxShadow: 2,
-                        '&:hover': { boxShadow: 4 }
-                      }}
-                    >
-                      {isSearchingYouTube ? 'Searching YouTube...' : 'Search NABH Training Videos'}
-                    </Button>
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                      AI-powered video suggestions
-                    </Typography>
                   </Box>
                 )}
                 
