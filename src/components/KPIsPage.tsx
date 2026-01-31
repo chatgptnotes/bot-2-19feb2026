@@ -32,7 +32,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActionArea from '@mui/material/CardActionArea';
-import { getHospitalInfo } from '../config/hospitalConfig';
+import { HOSPITAL_INFO, getHospitalInfo } from '../config/hospitalConfig';
 import { NABH_KPIS, NABH_KPI_CATEGORIES, generateSampleKPIData } from '../data/kpiData';
 import type { KPIDefinition } from '../data/kpiData';
 import { extractFromDocument, extractKPIData, generateImprovedDocument } from '../services/documentExtractor';
