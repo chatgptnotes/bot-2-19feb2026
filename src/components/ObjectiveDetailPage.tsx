@@ -1169,28 +1169,116 @@ Title: ${doc.title}
 Type: ${doc.documentType}
 Description: ${doc.description}
 
-CRITICAL INSTRUCTIONS:
-1. Generate a COMPLETE, FILLED evidence document (NOT a blank template)
+═══════════════════════════════════════════════════════════════════
+CRITICAL INSTRUCTIONS - CREATE DETAILED, COMPREHENSIVE DOCUMENTS
+═══════════════════════════════════════════════════════════════════
+
+🎯 DOCUMENT COMPLETENESS REQUIREMENTS:
+1. Generate a COMPLETE, FILLED, AUDITOR-READY document (NOT a blank template)
 2. Use ACTUAL data from ${hospitalConfig.name} database (patient records, staff records, equipment data provided above)
-3. Create REALISTIC entries with specific:
-   - Employee names, IDs, designations, signatures
-   - Patient names, UHIDs, visit IDs
-   - Dates (use dates from 6-9 months ago for realistic compliance)
-   - Locations, departments
-   - Actual procedural details
-4. For training documents, include:
-   - Training circular: date, time, venue, trainer name, participant list
-   - Attendance: employee names with IDs and signatures (use SVG signatures)
-   - Content: detailed training material with topics and key points
-   - Assessment: 10 MCQs with employee answers and scores
-   - Report: attendance stats, assessment results, recommendations
-5. For audit documents, include:
-   - Specific audit findings and observations
-   - Scoring and compliance percentages
-   - Action items with responsible persons and timelines
-6. Make it look like AUTHENTIC hospital documentation
-7. Use professional HTML format with headers, tables, signatures
-8. Include hospital logo, address, document numbers
+3. Each document must be 2-4 pages long with COMPREHENSIVE detail
+4. Include ALL required sections, forms, registers, checklists as appropriate
+
+📊 FOR REGISTERS & LOG BOOKS:
+- Create FULL DATA TABLES with 15-25 rows of FILLED entries
+- Include ALL relevant columns with proper headers
+- Example columns for attendance: Sr No, Employee ID, Name, Designation, Department, Signature, Date, Time In, Time Out
+- Example columns for equipment: Sr No, Equipment ID, Equipment Name, Location, Date, Reading, Status, Technician Name, Signature
+- Example columns for patient records: Sr No, UHID, Patient Name, Age, Gender, Diagnosis, Admission Date, Status
+- Fill EVERY row with realistic data using the database records provided
+- Add proper table styling with alternating row colors, borders, headers
+- Include summary statistics at the bottom (Total entries: X, Completed: Y, Pending: Z)
+
+📝 FOR FORMS:
+- Fill ALL fields with realistic data (no blank fields)
+- Include checkboxes (✓ checked where appropriate)
+- Add handwritten-style signatures using cursive fonts
+- Include stamps, dates, reference numbers
+- Add "Form No:", "Version:", "Page X of Y" in headers
+
+📋 FOR CHECKLISTS:
+- Include 15-20 checklist items with YES/NO/NA columns
+- Add checkmarks (✓) or crosses (✗) for each item
+- Include "Compliant/Non-Compliant" status
+- Add "Checked By" and "Verified By" signatures
+- Include compliance percentage calculation
+
+🏥 FOR ATTENDANCE SHEETS:
+- Minimum 20-30 employee entries
+- Columns: Sr No, Employee ID, Name, Designation, Department, Signature, Time In, Time Out
+- Use actual staff names from database
+- Add realistic signatures using SVG or cursive fonts
+- Include header: Training Topic, Date, Venue, Trainer Name
+- Add footer: Total Attendees, Present, Absent
+
+📝 FOR TRAINING ASSESSMENT (MCQ):
+- Create 10 multiple-choice questions with 4 options each
+- Mark correct answers
+- Show employee responses for 5-10 employees
+- Include scoring: Employee Name, Score (X/10), Pass/Fail, Signature
+- Add pass criteria (e.g., 70% or 7/10)
+- Include question categories (Knowledge, Application, Compliance)
+
+📊 FOR AUDIT REPORTS:
+- Include detailed audit criteria table (15-20 items)
+- Columns: Sr No, Audit Criteria, Standard Requirement, Observation, Evidence Seen, Score, Remarks
+- Add scoring system (Compliant=2, Partial=1, Non-Compliant=0)
+- Calculate total score and compliance percentage
+- Include CAPA (Corrective Action) table with: Finding, Root Cause, Action, Responsible Person, Target Date, Status
+- Add auditor signatures and dates
+
+🔬 FOR EQUIPMENT CALIBRATION:
+- Include detailed calibration data table
+- Columns: Parameter, Standard Value, Measured Value, Deviation, Acceptance Criteria, Result (Pass/Fail)
+- Add equipment details: Make, Model, Serial No, Location, Last Calibration, Next Due
+- Include calibration certificate with standards used
+- Add technician signature and certification number
+
+💊 FOR MEDICATION CHARTS:
+- Create 7-day medication administration record
+- Columns for each day with time slots (Morning, Afternoon, Evening, Night)
+- Include: Drug Name, Dose, Route, Frequency, Start Date, Stop Date
+- Mark administered doses with nurse initials
+- Add PRN (as needed) medications separately
+- Include allergies section at top
+
+🦠 FOR INFECTION SURVEILLANCE:
+- Monthly data table with daily entries
+- Columns: Date, Ward, Patient Name, UHID, Type of Infection, Site, Organism, Antibiotic, Outcome
+- Include infection rate calculation
+- Add graph or chart showing trends
+- Include preventive actions taken
+
+DETAILED FORMATTING REQUIREMENTS:
+✓ Professional hospital letterhead with logo
+✓ Document control: Doc No, Version, Effective Date, Review Date, Page X of Y
+✓ Proper section headings and sub-headings
+✓ Data tables with borders, headers, alternating row colors
+✓ Signature blocks: Prepared By, Reviewed By, Approved By (with names, designations, dates, signatures)
+✓ Hospital stamp/seal area
+✓ Footer with hospital name, address, document reference
+✓ Use realistic dates from 6-9 months ago
+✓ Include actual employee names, patient UHIDs, equipment IDs from database
+✓ Professional fonts: Arial, Calibri, or Segoe UI
+✓ Proper spacing, margins, and print-ready layout
+
+🎨 CSS STYLING - MUST INCLUDE:
+- Professional color scheme (blues/greens for headers)
+- Table borders and styling
+- Alternating row colors for readability
+- Signature boxes with borders
+- Print-friendly layout (@media print rules)
+- Responsive design
+- Professional spacing and padding
+
+⚠️ ABSOLUTE REQUIREMENTS:
+- NO BLANK TEMPLATES - Everything must be FILLED
+- NO PLACEHOLDER TEXT - Use actual data
+- NO "Sample" or "Example" - Make it look REAL
+- Minimum 15-25 rows of data in registers/tables
+- Include realistic calculations, totals, percentages
+- Add proper signatures using cursive fonts or SVG
+- Make it INDISTINGUISHABLE from real hospital documentation
 
 Generate complete HTML document with embedded CSS. Output ONLY the HTML, nothing else.`;
 
