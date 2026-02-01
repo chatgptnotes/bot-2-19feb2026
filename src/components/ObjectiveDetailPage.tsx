@@ -1500,9 +1500,9 @@ Only output the JSON object, nothing else.`;
     : `https://www.nabh.online${hospitalConfig.name === 'Ayushman Hospital' ? '/ayushman-logo.png' : '/hospital-logo.png'}`;
 
   // Get the HTML template for evidence documents
-  const getEvidenceDocumentPrompt = (evidenceItem?: string) => {
+  const getEvidenceDocumentPrompt = async (evidenceItem?: string) => {
     // Get relevant Hope Hospital data based on evidence type
-    const relevantData = evidenceItem ? getRelevantData(evidenceItem) : {};
+    const relevantData = evidenceItem ? await getRelevantData(evidenceItem) : {};
 
     // Format data for prompt
     const dataContext = hospitalConfig.name === 'Hope Hospital' ? `
@@ -1513,36 +1513,30 @@ ${relevantData.patients && relevantData.patients.length > 0 ? `
 === PATIENT RECORDS (Hope Hospital Database) ===
 ${relevantData.patients.map((p, idx) => `
 Patient ${idx + 1}:
-- UHID: ${p.uhid}
-- Name: ${p.name}
-- Age/Gender: ${p.age} years, ${p.gender}
-- Contact: ${p.contactNumber}
-- Address: ${p.address}
-- Admission Date: ${p.admissionDate}
-${p.dischargeDate ? `- Discharge Date: ${p.dischargeDate}` : '- Status: Currently Admitted'}
-- Department: ${p.department}
-- Diagnosis: ${p.diagnosis}
-- Consulting Doctor: ${p.consultingDoctor}
-- Blood Group: ${p.bloodGroup}
-- Emergency Contact: ${p.emergencyContact}
-${p.insuranceProvider ? `- Insurance: ${p.insuranceProvider}, Policy: ${p.policyNumber}` : ''}
+- Visit ID/UHID: ${p.visit_id}
+- Serial No: ${p.sr_no || 'N/A'}
+- Patient Name: ${p.patient_name}
+- Diagnosis: ${p.diagnosis || 'Not specified'}
+- Admission Date: ${p.admission_date || 'Not specified'}
+${p.discharge_date ? `- Discharge Date: ${p.discharge_date}` : '- Status: ' + p.status}
 `).join('\n')}
+
+NOTE: Use these EXACT patient names and Visit IDs. Do not modify them. If you need additional details like age, contact, etc., create realistic values that fit with the patient's name and context.
 ` : ''}
 
 ${relevantData.staff && relevantData.staff.length > 0 ? `
 === STAFF RECORDS (Hope Hospital Database) ===
 ${relevantData.staff.map((s, idx) => `
 Staff ${idx + 1}:
-- Employee ID: ${s.employeeId}
 - Name: ${s.name}
+- Role: ${s.role}
 - Designation: ${s.designation}
 - Department: ${s.department}
-- Qualification: ${s.qualification}
-- Joining Date: ${s.joiningDate}
-- Contact: ${s.contactNumber}
-- Email: ${s.email}
-${s.shift ? `- Shift: ${s.shift}` : ''}
+- Responsibilities: ${s.responsibilities?.join(', ') || 'General duties'}
+- Status: ${s.is_active ? 'Active' : 'Inactive'}
 `).join('\n')}
+
+NOTE: Use these EXACT staff names and designations for any staff-related documentation.
 ` : ''}
 
 ${relevantData.equipment && relevantData.equipment.length > 0 ? `
@@ -2119,8 +2113,8 @@ SPECIFIC INSTRUCTIONS FOR HOPE HOSPITAL EVIDENCE:
       const item = selectedItems[i];
       setDocumentGenerationProgress({ current: i + 1, total: selectedItems.length });
 
-      // Get evidence-specific prompt with relevant data
-      const contentPrompt = getEvidenceDocumentPrompt(item.text);
+      // Get evidence-specific prompt with relevant data (async - fetches from database)
+      const contentPrompt = await getEvidenceDocumentPrompt(item.text);
 
       const userMessage = `Objective Element: ${objective?.description}
 
@@ -2295,7 +2289,8 @@ Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospi
         throw new Error('Gemini API key not configured');
       }
 
-      const prompt = `${getEvidenceDocumentPrompt(customEvidencePrompt)}
+      const basePrompt = await getEvidenceDocumentPrompt(customEvidencePrompt);
+      const prompt = `${basePrompt}
 
 OBJECTIVE: ${objective?.code} - ${objective?.title}
 

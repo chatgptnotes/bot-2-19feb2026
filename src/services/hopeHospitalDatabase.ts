@@ -1,36 +1,33 @@
 /**
- * Hope Hospital Patient Database
- * Realistic patient records for evidence generation
+ * Hope Hospital Real Database Service
+ * Fetches actual patient and hospital data from Supabase
  */
 
+import { supabase } from '../lib/supabase';
+
 export interface PatientRecord {
-  uhid: string;
-  name: string;
-  age: number;
-  gender: 'Male' | 'Female' | 'Other';
-  contactNumber: string;
-  address: string;
-  admissionDate: string;
-  dischargeDate?: string;
-  department: string;
-  diagnosis: string;
-  consultingDoctor: string;
-  bloodGroup: string;
-  emergencyContact: string;
-  insuranceProvider?: string;
-  policyNumber?: string;
+  id: string;
+  sr_no: number | null;
+  visit_id: string; // This is like UHID
+  patient_name: string;
+  diagnosis: string | null;
+  admission_date: string | null;
+  discharge_date: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface StaffRecord {
-  employeeId: string;
+  id: string;
   name: string;
+  role: string;
   designation: string;
   department: string;
-  qualification: string;
-  joiningDate: string;
-  contactNumber: string;
-  email: string;
-  shift?: 'Morning' | 'Evening' | 'Night';
+  responsibilities: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface EquipmentRecord {
@@ -57,276 +54,45 @@ export interface IncidentRecord {
   status: 'Open' | 'Under Investigation' | 'Closed';
 }
 
-// Hope Hospital Patient Database
-export const HOPE_HOSPITAL_PATIENTS: PatientRecord[] = [
+// Hardcoded Hope Hospital Staff (until we have a staff table)
+const HOPE_HOSPITAL_STAFF: StaffRecord[] = [
   {
-    uhid: 'HH/2024/0001',
-    name: 'Rajesh Kumar Sharma',
-    age: 45,
-    gender: 'Male',
-    contactNumber: '9876543210',
-    address: '23, MG Road, Nagpur - 440001',
-    admissionDate: '15-Jan-2024',
-    dischargeDate: '18-Jan-2024',
-    department: 'Cardiology',
-    diagnosis: 'Acute Myocardial Infarction',
-    consultingDoctor: 'Dr. Priya Deshmukh',
-    bloodGroup: 'B+',
-    emergencyContact: '9876543211 (Spouse)',
-    insuranceProvider: 'Star Health Insurance',
-    policyNumber: 'STR/2023/045612',
-  },
-  {
-    uhid: 'HH/2024/0002',
-    name: 'Sunita Ramesh Patil',
-    age: 32,
-    gender: 'Female',
-    contactNumber: '9123456789',
-    address: '45, Civil Lines, Nagpur - 440012',
-    admissionDate: '16-Jan-2024',
-    dischargeDate: '20-Jan-2024',
-    department: 'Obstetrics & Gynecology',
-    diagnosis: 'Normal Delivery - Female Child',
-    consultingDoctor: 'Dr. Anita Mehta',
-    bloodGroup: 'O+',
-    emergencyContact: '9123456790 (Husband)',
-    insuranceProvider: 'HDFC Ergo Health',
-    policyNumber: 'HDF/2023/078934',
-  },
-  {
-    uhid: 'HH/2024/0003',
-    name: 'Anil Vasant Joshi',
-    age: 58,
-    gender: 'Male',
-    contactNumber: '9234567890',
-    address: '12, Dharampeth, Nagpur - 440010',
-    admissionDate: '17-Jan-2024',
-    department: 'Orthopedics',
-    diagnosis: 'Fracture Right Femur',
-    consultingDoctor: 'Dr. Vikram Singh',
-    bloodGroup: 'A+',
-    emergencyContact: '9234567891 (Son)',
-    insuranceProvider: 'Bajaj Allianz',
-    policyNumber: 'BAJ/2023/112345',
-  },
-  {
-    uhid: 'HH/2024/0004',
-    name: 'Meena Suresh Kapoor',
-    age: 41,
-    gender: 'Female',
-    contactNumber: '9345678901',
-    address: '78, Sadar, Nagpur - 440001',
-    admissionDate: '18-Jan-2024',
-    dischargeDate: '22-Jan-2024',
-    department: 'General Surgery',
-    diagnosis: 'Acute Appendicitis',
-    consultingDoctor: 'Dr. Rajesh Kulkarni',
-    bloodGroup: 'AB+',
-    emergencyContact: '9345678902 (Husband)',
-  },
-  {
-    uhid: 'HH/2024/0005',
-    name: 'Prakash Narayan Rao',
-    age: 67,
-    gender: 'Male',
-    contactNumber: '9456789012',
-    address: '34, Sitabuldi, Nagpur - 440012',
-    admissionDate: '19-Jan-2024',
-    department: 'Nephrology',
-    diagnosis: 'Chronic Kidney Disease Stage 4',
-    consultingDoctor: 'Dr. Sanjay Deshpande',
-    bloodGroup: 'B-',
-    emergencyContact: '9456789013 (Daughter)',
-    insuranceProvider: 'Care Health Insurance',
-    policyNumber: 'CAR/2023/156789',
-  },
-  {
-    uhid: 'HH/2024/0006',
-    name: 'Kavita Ashok Bhosale',
-    age: 28,
-    gender: 'Female',
-    contactNumber: '9567890123',
-    address: '56, Ramdaspeth, Nagpur - 440010',
-    admissionDate: '20-Jan-2024',
-    dischargeDate: '21-Jan-2024',
-    department: 'Pediatrics',
-    diagnosis: 'Viral Fever',
-    consultingDoctor: 'Dr. Neha Agarwal',
-    bloodGroup: 'O+',
-    emergencyContact: '9567890124 (Mother)',
-  },
-  {
-    uhid: 'HH/2024/0007',
-    name: 'Deepak Mohan Jaiswal',
-    age: 52,
-    gender: 'Male',
-    contactNumber: '9678901234',
-    address: '89, Laxmi Nagar, Nagpur - 440022',
-    admissionDate: '21-Jan-2024',
-    department: 'Neurology',
-    diagnosis: 'Ischemic Stroke',
-    consultingDoctor: 'Dr. Amit Verma',
-    bloodGroup: 'A-',
-    emergencyContact: '9678901235 (Wife)',
-    insuranceProvider: 'Religare Health',
-    policyNumber: 'REL/2023/234567',
-  },
-  {
-    uhid: 'HH/2024/0008',
-    name: 'Anjali Ramesh Thakur',
-    age: 35,
-    gender: 'Female',
-    contactNumber: '9789012345',
-    address: '23, Gandhibag, Nagpur - 440002',
-    admissionDate: '22-Jan-2024',
-    dischargeDate: '25-Jan-2024',
-    department: 'ENT',
-    diagnosis: 'Chronic Sinusitis',
-    consultingDoctor: 'Dr. Sunil Patil',
-    bloodGroup: 'B+',
-    emergencyContact: '9789012346 (Husband)',
-  },
-  {
-    uhid: 'HH/2024/0009',
-    name: 'Vikas Shrikant Desai',
-    age: 43,
-    gender: 'Male',
-    contactNumber: '9890123456',
-    address: '67, Khamla, Nagpur - 440025',
-    admissionDate: '23-Jan-2024',
-    department: 'Gastroenterology',
-    diagnosis: 'Peptic Ulcer Disease',
-    consultingDoctor: 'Dr. Ashok Gupta',
-    bloodGroup: 'O-',
-    emergencyContact: '9890123457 (Brother)',
-    insuranceProvider: 'Max Bupa Health',
-    policyNumber: 'MAX/2023/345678',
-  },
-  {
-    uhid: 'HH/2024/0010',
-    name: 'Pooja Dinesh Kelkar',
-    age: 29,
-    gender: 'Female',
-    contactNumber: '9901234567',
-    address: '45, Manish Nagar, Nagpur - 440015',
-    admissionDate: '24-Jan-2024',
-    dischargeDate: '26-Jan-2024',
-    department: 'Dermatology',
-    diagnosis: 'Psoriasis',
-    consultingDoctor: 'Dr. Priyanka Jain',
-    bloodGroup: 'AB-',
-    emergencyContact: '9901234568 (Mother)',
-  },
-];
-
-// Hope Hospital Staff Database
-export const HOPE_HOSPITAL_STAFF: StaffRecord[] = [
-  {
-    employeeId: 'HH/EMP/001',
+    id: 'staff-001',
     name: 'Dr. Shiraz Sheikh',
+    role: 'NABH Coordinator',
     designation: 'NABH Coordinator / Administrator',
     department: 'Administration',
-    qualification: 'MBBS, MBA (Healthcare)',
-    joiningDate: '01-Jan-2020',
-    contactNumber: '9876501234',
-    email: 'shiraz.sheikh@hopehospital.in',
+    responsibilities: ['NABH Coordination', 'Quality Management', 'Hospital Administration'],
+    is_active: true,
+    created_at: '2020-01-01T00:00:00Z',
+    updated_at: '2020-01-01T00:00:00Z',
   },
   {
-    employeeId: 'HH/EMP/002',
+    id: 'staff-002',
     name: 'Jagruti Sharma',
+    role: 'Quality Manager',
     designation: 'Quality Manager / HR Head',
     department: 'Quality & HR',
-    qualification: 'MBA (HR), Six Sigma Black Belt',
-    joiningDate: '15-Feb-2020',
-    contactNumber: '9876502345',
-    email: 'jagruti.sharma@hopehospital.in',
+    responsibilities: ['Quality Management', 'HR Operations', 'Staff Training'],
+    is_active: true,
+    created_at: '2020-02-15T00:00:00Z',
+    updated_at: '2020-02-15T00:00:00Z',
   },
   {
-    employeeId: 'HH/EMP/003',
+    id: 'staff-003',
     name: 'Gaurav Malhotra',
+    role: 'Hospital Administrator',
     designation: 'Hospital Administrator',
     department: 'Administration',
-    qualification: 'MHA (Master of Hospital Administration)',
-    joiningDate: '01-Mar-2020',
-    contactNumber: '9876503456',
-    email: 'gaurav.malhotra@hopehospital.in',
-  },
-  {
-    employeeId: 'HH/EMP/004',
-    name: 'Dr. Priya Deshmukh',
-    designation: 'Senior Consultant Cardiologist',
-    department: 'Cardiology',
-    qualification: 'MBBS, MD (Cardiology)',
-    joiningDate: '15-Apr-2020',
-    contactNumber: '9876504567',
-    email: 'priya.deshmukh@hopehospital.in',
-  },
-  {
-    employeeId: 'HH/EMP/005',
-    name: 'Nurse Sangeeta Patil',
-    designation: 'Senior Staff Nurse',
-    department: 'ICU',
-    qualification: 'GNM, BSc Nursing',
-    joiningDate: '01-Jun-2020',
-    contactNumber: '9876505678',
-    email: 'sangeeta.patil@hopehospital.in',
-    shift: 'Morning',
-  },
-  {
-    employeeId: 'HH/EMP/006',
-    name: 'Ramesh Kumar',
-    designation: 'Biomedical Engineer',
-    department: 'Biomedical',
-    qualification: 'BE (Biomedical)',
-    joiningDate: '15-Jul-2020',
-    contactNumber: '9876506789',
-    email: 'ramesh.kumar@hopehospital.in',
-  },
-  {
-    employeeId: 'HH/EMP/007',
-    name: 'Sunita Reddy',
-    designation: 'Pharmacist',
-    department: 'Pharmacy',
-    qualification: 'B.Pharm, Registered Pharmacist',
-    joiningDate: '01-Aug-2020',
-    contactNumber: '9876507890',
-    email: 'sunita.reddy@hopehospital.in',
-  },
-  {
-    employeeId: 'HH/EMP/008',
-    name: 'Dr. Anita Mehta',
-    designation: 'Consultant Gynecologist',
-    department: 'Obstetrics & Gynecology',
-    qualification: 'MBBS, MS (OBG)',
-    joiningDate: '15-Sep-2020',
-    contactNumber: '9876508901',
-    email: 'anita.mehta@hopehospital.in',
-  },
-  {
-    employeeId: 'HH/EMP/009',
-    name: 'Rajesh Tiwari',
-    designation: 'Lab Technician',
-    department: 'Laboratory',
-    qualification: 'DMLT',
-    joiningDate: '01-Oct-2020',
-    contactNumber: '9876509012',
-    email: 'rajesh.tiwari@hopehospital.in',
-    shift: 'Morning',
-  },
-  {
-    employeeId: 'HH/EMP/010',
-    name: 'Priyanka Singh',
-    designation: 'Infection Control Nurse',
-    department: 'Infection Control',
-    qualification: 'BSc Nursing, IC Certification',
-    joiningDate: '15-Nov-2020',
-    contactNumber: '9876500123',
-    email: 'priyanka.singh@hopehospital.in',
+    responsibilities: ['Hospital Operations', 'Resource Management', 'Policy Implementation'],
+    is_active: true,
+    created_at: '2020-03-01T00:00:00Z',
+    updated_at: '2020-03-01T00:00:00Z',
   },
 ];
 
-// Hope Hospital Equipment Database
-export const HOPE_HOSPITAL_EQUIPMENT: EquipmentRecord[] = [
+// Hardcoded Equipment (until we have an equipment table)
+const HOPE_HOSPITAL_EQUIPMENT: EquipmentRecord[] = [
   {
     equipmentId: 'HH/EQP/001',
     name: 'Ventilator - Drager Evita V300',
@@ -384,8 +150,8 @@ export const HOPE_HOSPITAL_EQUIPMENT: EquipmentRecord[] = [
   },
 ];
 
-// Hope Hospital Incident Database
-export const HOPE_HOSPITAL_INCIDENTS: IncidentRecord[] = [
+// Hardcoded Incidents (until we have an incidents table)
+const HOPE_HOSPITAL_INCIDENTS: IncidentRecord[] = [
   {
     incidentId: 'HH/INC/2024/001',
     date: '15-Jan-2024',
@@ -421,58 +187,131 @@ export const HOPE_HOSPITAL_INCIDENTS: IncidentRecord[] = [
   },
 ];
 
-// Utility functions to get realistic data
-export function getRandomPatients(count: number = 5): PatientRecord[] {
-  const shuffled = [...HOPE_HOSPITAL_PATIENTS].sort(() => 0.5 - Math.random());
+/**
+ * Fetch real patient data from Supabase nabh_patients table
+ */
+export async function fetchRealPatients(limit: number = 20): Promise<PatientRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('nabh_patients')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching patients from Supabase:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Exception fetching patients:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch real staff data from Supabase nabh_team_members table
+ */
+export async function fetchRealStaff(limit: number = 10): Promise<StaffRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('nabh_team_members')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching staff from Supabase:', error);
+      // Return hardcoded staff as fallback
+      return HOPE_HOSPITAL_STAFF;
+    }
+
+    return data && data.length > 0 ? data : HOPE_HOSPITAL_STAFF;
+  } catch (error) {
+    console.error('Exception fetching staff:', error);
+    return HOPE_HOSPITAL_STAFF;
+  }
+}
+
+/**
+ * Get random patients from fetched data
+ */
+export function getRandomPatients(patients: PatientRecord[], count: number = 5): PatientRecord[] {
+  if (patients.length === 0) return [];
+  const shuffled = [...patients].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-export function getRandomStaff(count: number = 3): StaffRecord[] {
-  const shuffled = [...HOPE_HOSPITAL_STAFF].sort(() => 0.5 - Math.random());
+/**
+ * Get random staff from fetched data
+ */
+export function getRandomStaff(staff: StaffRecord[], count: number = 3): StaffRecord[] {
+  if (staff.length === 0) return HOPE_HOSPITAL_STAFF.slice(0, count);
+  const shuffled = [...staff].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+/**
+ * Get random equipment (hardcoded for now)
+ */
 export function getRandomEquipment(count: number = 3): EquipmentRecord[] {
   const shuffled = [...HOPE_HOSPITAL_EQUIPMENT].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+/**
+ * Get random incidents (hardcoded for now)
+ */
 export function getRandomIncidents(count: number = 2): IncidentRecord[] {
   const shuffled = [...HOPE_HOSPITAL_INCIDENTS].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-// Get data based on evidence type
-export function getRelevantData(evidenceType: string): {
+/**
+ * Get relevant data based on evidence type
+ * This function now fetches REAL data from Supabase
+ */
+export async function getRelevantData(evidenceType: string): Promise<{
   patients?: PatientRecord[];
   staff?: StaffRecord[];
   equipment?: EquipmentRecord[];
   incidents?: IncidentRecord[];
-} {
+}> {
   const type = evidenceType.toLowerCase();
-  const data: ReturnType<typeof getRelevantData> = {};
+  const data: {
+    patients?: PatientRecord[];
+    staff?: StaffRecord[];
+    equipment?: EquipmentRecord[];
+    incidents?: IncidentRecord[];
+  } = {};
 
-  // Patient-related evidence
+  // Patient-related evidence - fetch REAL patients from Supabase
   if (type.includes('patient') || type.includes('admission') || type.includes('discharge') ||
-      type.includes('care') || type.includes('record') || type.includes('assessment')) {
-    data.patients = getRandomPatients(5);
+      type.includes('care') || type.includes('record') || type.includes('assessment') ||
+      type.includes('consent') || type.includes('medication') || type.includes('treatment')) {
+    const realPatients = await fetchRealPatients(20);
+    data.patients = getRandomPatients(realPatients, 8);
   }
 
-  // Staff-related evidence
+  // Staff-related evidence - fetch REAL staff from Supabase
   if (type.includes('staff') || type.includes('training') || type.includes('credential') ||
-      type.includes('employee') || type.includes('roster') || type.includes('duty')) {
-    data.staff = getRandomStaff(5);
+      type.includes('employee') || type.includes('roster') || type.includes('duty') ||
+      type.includes('competency') || type.includes('performance')) {
+    const realStaff = await fetchRealStaff(10);
+    data.staff = getRandomStaff(realStaff, 5);
   }
 
-  // Equipment-related evidence
+  // Equipment-related evidence (hardcoded for now)
   if (type.includes('equipment') || type.includes('calibration') || type.includes('maintenance') ||
-      type.includes('biomedical') || type.includes('device')) {
+      type.includes('biomedical') || type.includes('device') || type.includes('machine')) {
     data.equipment = getRandomEquipment(5);
   }
 
-  // Incident-related evidence
+  // Incident-related evidence (hardcoded for now)
   if (type.includes('incident') || type.includes('accident') || type.includes('error') ||
-      type.includes('adverse') || type.includes('sentinel')) {
+      type.includes('adverse') || type.includes('sentinel') || type.includes('safety')) {
     data.incidents = getRandomIncidents(3);
   }
 
@@ -480,13 +319,14 @@ export function getRelevantData(evidenceType: string): {
 }
 
 export default {
-  HOPE_HOSPITAL_PATIENTS,
-  HOPE_HOSPITAL_STAFF,
-  HOPE_HOSPITAL_EQUIPMENT,
-  HOPE_HOSPITAL_INCIDENTS,
+  fetchRealPatients,
+  fetchRealStaff,
   getRandomPatients,
   getRandomStaff,
   getRandomEquipment,
   getRandomIncidents,
   getRelevantData,
+  HOPE_HOSPITAL_STAFF,
+  HOPE_HOSPITAL_EQUIPMENT,
+  HOPE_HOSPITAL_INCIDENTS,
 };
