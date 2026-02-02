@@ -31,9 +31,14 @@ import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
+import Autocomplete from '@mui/material/Autocomplete';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import { getHospitalInfo, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
-import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
+import { getClaudeApiKey, getGeminiApiKey, supabase } from '../lib/supabase';
 import {
   generateInfographic,
   svgToDataUrl,
@@ -67,6 +72,13 @@ interface HospitalConfig {
   qualityCoordinator: string;
   qualityCoordinatorDesignation: string;
   logo: string;
+}
+
+// Signatory data interface
+interface SignatoryData {
+  preparedBy: { name: string; designation: string; date: string };
+  reviewedBy: { name: string; designation: string; date: string };
+  approvedBy: { name: string; designation: string; date: string };
 }
 
 const nabhCoordinator = getNABHCoordinator();
@@ -277,7 +289,12 @@ function extractTextFromHTML(html: string): string {
 }
 
 // Helper function to update HTML content with edited text
-function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string }): string {
+function updateHTMLWithText(
+  _originalHTML: string,
+  editedText: string,
+  hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string },
+  signatories?: SignatoryData
+): string {
   // Parse the edited text to extract sections
   const lines = editedText.split('\n');
 
@@ -362,9 +379,9 @@ function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalC
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name: ${hospitalConfig.qualityCoordinator}<br>Designation: ${hospitalConfig.qualityCoordinatorDesignation}<br>Date:<br><br>Signature:</td>
+      <td>Name: ${signatories?.preparedBy?.name || ''}<br>Designation: ${signatories?.preparedBy?.designation || ''}<br>Date: ${signatories?.preparedBy?.date || ''}<br><br>Signature:</td>
+      <td>Name: ${signatories?.reviewedBy?.name || ''}<br>Designation: ${signatories?.reviewedBy?.designation || ''}<br>Date: ${signatories?.reviewedBy?.date || ''}<br><br>Signature:</td>
+      <td>Name: ${signatories?.approvedBy?.name || hospitalConfig.qualityCoordinator}<br>Designation: ${signatories?.approvedBy?.designation || hospitalConfig.qualityCoordinatorDesignation}<br>Date: ${signatories?.approvedBy?.date || ''}<br><br>Signature:</td>
     </tr>
   </table>
 
@@ -545,6 +562,37 @@ export default function AIEvidenceGenerator() {
   const [saveMessage, setSaveMessage] = useState('');
   // Track saved documents: index -> saved document ID
   const [savedDocuments, setSavedDocuments] = useState<Record<number, string>>({});
+
+  // Editable preview dialog state
+  const [editablePreviewOpen, setEditablePreviewOpen] = useState(false);
+  const [editablePreviewIndex, setEditablePreviewIndex] = useState<number | null>(null);
+  const editableIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Employee dropdown state for signatories
+  const [employees, setEmployees] = useState<{id: string, name: string, designation: string}[]>([]);
+  const [preparedBy, setPreparedBy] = useState({ name: '', designation: '', date: '' });
+  const [reviewedBy, setReviewedBy] = useState({ name: '', designation: '', date: '' });
+  const [approvedBy, setApprovedBy] = useState({ name: '', designation: '', date: '' });
+
+  // Fetch employees from Supabase on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data, error } = await supabase
+        .from('nabh_team_members')
+        .select('id, name, designation')
+        .eq('is_active', true)
+        .order('name');
+      if (data && !error) {
+        const employeeData = data as unknown as {id: string, name: string, designation: string}[];
+        setEmployees(employeeData);
+        const coordinator = employeeData.find(e => e.designation?.toLowerCase().includes('nabh coordinator'));
+        if (coordinator) {
+          setApprovedBy({ name: coordinator.name, designation: coordinator.designation, date: new Date().toISOString().split('T')[0] });
+        }
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   // Auto-populate from store if navigated from ObjectiveDetailPage
   useEffect(() => {
@@ -902,14 +950,26 @@ export default function AIEvidenceGenerator() {
 
   // Handle text editing and update HTML
   const handleTextEdit = (index: number, newText: string) => {
+    const signatories: SignatoryData = { preparedBy, reviewedBy, approvedBy };
     setGeneratedContents(prev => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
         editableText: newText,
-        content: updateHTMLWithText(updated[index].content, newText, hospitalConfig),
+        content: updateHTMLWithText(updated[index].content, newText, hospitalConfig, signatories),
       };
       return updated;
+    });
+  };
+
+  // Apply signatories to all generated documents
+  const applySignatoriesToDocuments = () => {
+    const signatories: SignatoryData = { preparedBy, reviewedBy, approvedBy };
+    setGeneratedContents(prev => {
+      return prev.map(gc => ({
+        ...gc,
+        content: updateHTMLWithText(gc.content, gc.editableText, hospitalConfig, signatories),
+      }));
     });
   };
 
@@ -921,6 +981,65 @@ export default function AIEvidenceGenerator() {
     }));
   };
   void _toggleDocumentViewMode; // Suppress unused variable warning
+
+  // Make HTML content editable by adding contentEditable attribute and styles
+  const makeEditable = (html: string): string => {
+    if (!html) return '';
+    let editableHtml = html.replace(
+      '<body',
+      `<body contenteditable="true" style="outline: none; cursor: text;"`
+    );
+    editableHtml = editableHtml.replace(
+      '</head>',
+      `<style>
+        body[contenteditable="true"]:focus { outline: 2px solid #1565C0; outline-offset: 2px; }
+        body[contenteditable="true"] *:hover { background: rgba(21, 101, 192, 0.05); }
+        body[contenteditable="true"] *:focus { outline: 1px dashed #1565C0; }
+      </style></head>`
+    );
+    return editableHtml;
+  };
+
+  // Open editable preview dialog
+  const handleEditablePreview = (index: number) => {
+    setEditablePreviewIndex(index);
+    setEditablePreviewOpen(true);
+  };
+
+  // Save changes from editable preview iframe
+  const handleSaveEditablePreview = () => {
+    const iframe = editableIframeRef.current;
+    if (iframe && editablePreviewIndex !== null) {
+      const iframeDoc = iframe.contentDocument;
+      if (iframeDoc) {
+        const body = iframeDoc.body;
+        if (body) {
+          body.removeAttribute('contenteditable');
+          body.style.removeProperty('outline');
+          body.style.removeProperty('cursor');
+        }
+        const editingStyles = iframeDoc.querySelectorAll('style');
+        editingStyles.forEach(style => {
+          if (style.textContent?.includes('contenteditable')) {
+            style.remove();
+          }
+        });
+
+        const newHTML = iframeDoc.documentElement.outerHTML || '';
+        setGeneratedContents(prev => {
+          const updated = [...prev];
+          updated[editablePreviewIndex] = {
+            ...updated[editablePreviewIndex],
+            content: '<!DOCTYPE html>\n' + newHTML,
+            editableText: extractTextFromHTML(newHTML),
+          };
+          return updated;
+        });
+      }
+      setEditablePreviewOpen(false);
+      setEditablePreviewIndex(null);
+    }
+  };
 
   const handleCopyContent = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -1642,6 +1761,139 @@ ${trimmed}
                       </Alert>
                     )}
 
+                    {/* Document Signatories Section */}
+                    <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon color="primary">badge</Icon>
+                        Document Signatories
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {/* PREPARED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>PREPARED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === preparedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setPreparedBy({ ...preparedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setPreparedBy({ ...preparedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={preparedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={preparedBy.date}
+                            onChange={(e) => setPreparedBy({ ...preparedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+
+                        {/* REVIEWED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>REVIEWED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === reviewedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setReviewedBy({ ...reviewedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setReviewedBy({ ...reviewedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={reviewedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={reviewedBy.date}
+                            onChange={(e) => setReviewedBy({ ...reviewedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+
+                        {/* APPROVED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>APPROVED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === approvedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setApprovedBy({ ...approvedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setApprovedBy({ ...approvedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={approvedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={approvedBy.date}
+                            onChange={(e) => setApprovedBy({ ...approvedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Box sx={{ mt: 2, textAlign: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={<Icon>check</Icon>}
+                          onClick={applySignatoriesToDocuments}
+                        >
+                          Apply to All Documents
+                        </Button>
+                      </Box>
+                    </Paper>
+
                     {generatedContents.map((gc, index) => (
                       <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
@@ -1681,6 +1933,16 @@ ${trimmed}
                                 onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
                               >
                                 Preview
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="secondary"
+                                startIcon={<Icon>edit_document</Icon>}
+                                onClick={() => handleEditablePreview(index)}
+                                disabled={!isHTMLContent(gc.content)}
+                              >
+                                Edit in Preview
                               </Button>
                               <Button
                                 size="small"
@@ -2166,6 +2428,78 @@ ${trimmed}
           </Typography>
         </Alert>
       </Paper>
+
+      {/* Editable Preview Dialog */}
+      <Dialog
+        open={editablePreviewOpen}
+        onClose={() => setEditablePreviewOpen(false)}
+        fullScreen
+        PaperProps={{
+          sx: { bgcolor: 'grey.100' }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'primary.main', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Icon>edit_document</Icon>
+            <Typography variant="h6">
+              Edit Document in Preview
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => setEditablePreviewOpen(false)}
+            sx={{ color: 'white' }}
+          >
+            <Icon>close</Icon>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              Click directly on the document to edit text. Changes are made directly in the formatted preview.
+              Use the <strong>Save Changes</strong> button below to save your edits.
+            </Typography>
+          </Alert>
+          <Paper
+            variant="outlined"
+            sx={{
+              height: 'calc(100vh - 220px)',
+              overflow: 'hidden',
+              bgcolor: 'white',
+            }}
+          >
+            {editablePreviewIndex !== null && generatedContents[editablePreviewIndex] && (
+              <iframe
+                ref={editableIframeRef}
+                srcDoc={makeEditable(extractHTMLContent(generatedContents[editablePreviewIndex].content))}
+                title="Editable Preview"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  backgroundColor: 'white',
+                }}
+              />
+            )}
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button
+            variant="outlined"
+            startIcon={<Icon>close</Icon>}
+            onClick={() => setEditablePreviewOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Icon>save</Icon>}
+            onClick={handleSaveEditablePreview}
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
