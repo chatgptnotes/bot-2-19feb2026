@@ -739,7 +739,12 @@ export default function AIEvidenceGenerator() {
       }
 
       if (dataContext) {
-        dataContext += '\nCRITICAL INSTRUCTION: You MUST use the EXACT patient names, Visit IDs, admission dates, and discharge dates from the data above. Do NOT use dummy data like "John Doe" or "1234567". Fill the document with REAL patient records provided.';
+        dataContext += '\n\nCRITICAL INSTRUCTIONS:';
+        dataContext += '\n1. Use EXACT patient names, Visit IDs, admission dates, and discharge dates from the data above.';
+        dataContext += '\n2. For PREPARED BY section: Use first staff member name and their designation from the staff data above.';
+        dataContext += '\n3. For REVIEWED BY section: Use second staff member name (preferably Head/Senior role) and their designation.';
+        dataContext += '\n4. Do NOT use placeholder text like "[PREPARED BY NAME]", "[REVIEWED BY NAME]", or "John Doe".';
+        dataContext += '\n5. Fill ALL name fields with actual names from the database provided above.';
       }
 
       const userMessage = `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}${dataContext}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
