@@ -13,6 +13,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -61,6 +62,8 @@ export default function EmployeesPage() {
     message: '',
     severity: 'success' as 'success' | 'error',
   });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     loadEmployees();
@@ -80,6 +83,7 @@ export default function EmployeesPage() {
     } else {
       setFilteredEmployees(employees);
     }
+    setPage(0); // Reset to first page when search changes
   }, [employees, searchQuery]);
 
   const loadEmployees = async () => {
@@ -260,8 +264,8 @@ export default function EmployeesPage() {
 
       {/* Table */}
       <Paper>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: 500, overflow: 'auto' }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ bgcolor: 'primary.main' }}>
                 <TableCell sx={{ color: 'white', fontWeight: 600 }}>Name</TableCell>
@@ -288,7 +292,9 @@ export default function EmployeesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEmployees.map((employee) => (
+                filteredEmployees
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((employee) => (
                   <TableRow key={employee.id} hover>
                     <TableCell>
                       <Typography fontWeight={500}>{employee.name}</Typography>
@@ -325,6 +331,18 @@ export default function EmployeesPage() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          component="div"
+          count={filteredEmployees.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+        />
       </Paper>
 
       {/* Add/Edit Dialog */}
