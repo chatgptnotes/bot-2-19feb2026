@@ -1088,6 +1088,8 @@ Start directly with the numbered list, no introduction or explanation.`;
         .slice(0, 8);
 
       setInterpretationEvidenceItems(evidenceItems);
+      setHasUnsavedChanges(true); // Enable Save button for newly generated items
+      setInterpretationSaveSuccess(false); // Clear any previous save success state
     } catch (error) {
       console.error('Error generating evidence from interpretation:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
