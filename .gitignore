@@ -40,3 +40,5 @@ Thumbs.db
 .claude/
 *.bak
 *.tmp
+.vercel
+.env*.local
