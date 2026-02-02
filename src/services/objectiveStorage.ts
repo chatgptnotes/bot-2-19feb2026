@@ -199,7 +199,16 @@ export async function saveObjectiveToSupabase(
             }
             if (objective.notes) normalizedUpdate.notes = objective.notes;
             if (objective.assignee) normalizedUpdate.assignee = objective.assignee;
-            if (objective.status) normalizedUpdate.status = objective.status;
+            // Normalize status to match database CHECK constraint (case-sensitive)
+            if (objective.status) {
+              const statusMap: Record<string, string> = {
+                'not started': 'Not Started',
+                'in progress': 'In Progress',
+                'completed': 'Completed',
+                'not applicable': 'Not Applicable',
+              };
+              normalizedUpdate.status = statusMap[objective.status.toLowerCase()] || objective.status;
+            }
 
             console.log('Saving to nabh_objective_elements:', {
               elementId: matchingElement.id,
