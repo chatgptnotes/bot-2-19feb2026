@@ -30,9 +30,10 @@ import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
+import Autocomplete from '@mui/material/Autocomplete';
 import { useNABHStore } from '../store/nabhStore';
 import { getHospitalInfo, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
-import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
+import { getClaudeApiKey, getGeminiApiKey, supabase } from '../lib/supabase';
 import {
   generateInfographic,
   svgToDataUrl,
@@ -275,8 +276,20 @@ function extractTextFromHTML(html: string): string {
   return sections.join('\n');
 }
 
+// Signatory data interface
+interface SignatoryData {
+  preparedBy: { name: string; designation: string; date: string };
+  reviewedBy: { name: string; designation: string; date: string };
+  approvedBy: { name: string; designation: string; date: string };
+}
+
 // Helper function to update HTML content with edited text
-function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string }): string {
+function updateHTMLWithText(
+  _originalHTML: string,
+  editedText: string,
+  hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string },
+  signatories?: SignatoryData
+): string {
   // Parse the edited text to extract sections
   const lines = editedText.split('\n');
 
@@ -360,9 +373,9 @@ function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalC
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name: ${hospitalConfig.qualityCoordinator}<br>Designation: ${hospitalConfig.qualityCoordinatorDesignation}<br>Date:<br><br>Signature:</td>
+      <td>Name: ${signatories?.preparedBy?.name || ''}<br>Designation: ${signatories?.preparedBy?.designation || ''}<br>Date: ${signatories?.preparedBy?.date || ''}<br><br>Signature:</td>
+      <td>Name: ${signatories?.reviewedBy?.name || ''}<br>Designation: ${signatories?.reviewedBy?.designation || ''}<br>Date: ${signatories?.reviewedBy?.date || ''}<br><br>Signature:</td>
+      <td>Name: ${signatories?.approvedBy?.name || hospitalConfig.qualityCoordinator}<br>Designation: ${signatories?.approvedBy?.designation || hospitalConfig.qualityCoordinatorDesignation}<br>Date: ${signatories?.approvedBy?.date || ''}<br><br>Signature:</td>
     </tr>
   </table>
 
@@ -537,6 +550,34 @@ export default function AIEvidenceGenerator() {
 
   // Document view mode state (for each document: 0 = HTML preview, 1 = Edit text)
   const [documentViewModes, setDocumentViewModes] = useState<Record<number, number>>({});
+
+  // Employee dropdown state for signatories
+  const [employees, setEmployees] = useState<{id: string, name: string, designation: string}[]>([]);
+  const [preparedBy, setPreparedBy] = useState({ name: '', designation: '', date: '' });
+  const [reviewedBy, setReviewedBy] = useState({ name: '', designation: '', date: '' });
+  const [approvedBy, setApprovedBy] = useState({ name: '', designation: '', date: '' });
+
+  // Fetch employees from Supabase on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data, error } = await supabase
+        .from('nabh_team_members')
+        .select('id, name, designation')
+        .eq('is_active', true)
+        .order('name');
+      if (data && !error) {
+        // Type assertion for employee data
+        const employeeData = data as unknown as {id: string, name: string, designation: string}[];
+        setEmployees(employeeData);
+        // Set default approved by to NABH coordinator if available
+        const coordinator = employeeData.find(e => e.designation?.toLowerCase().includes('nabh coordinator'));
+        if (coordinator) {
+          setApprovedBy({ name: coordinator.name, designation: coordinator.designation, date: new Date().toISOString().split('T')[0] });
+        }
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   // Auto-populate from store if navigated from ObjectiveDetailPage
   useEffect(() => {
@@ -875,14 +916,26 @@ export default function AIEvidenceGenerator() {
 
   // Handle text editing and update HTML
   const handleTextEdit = (index: number, newText: string) => {
+    const signatories: SignatoryData = { preparedBy, reviewedBy, approvedBy };
     setGeneratedContents(prev => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
         editableText: newText,
-        content: updateHTMLWithText(updated[index].content, newText, hospitalConfig),
+        content: updateHTMLWithText(updated[index].content, newText, hospitalConfig, signatories),
       };
       return updated;
+    });
+  };
+
+  // Apply signatories to all generated documents
+  const applySignatoriesToDocuments = () => {
+    const signatories: SignatoryData = { preparedBy, reviewedBy, approvedBy };
+    setGeneratedContents(prev => {
+      return prev.map(gc => ({
+        ...gc,
+        content: updateHTMLWithText(gc.content, gc.editableText, hospitalConfig, signatories),
+      }));
     });
   };
 
@@ -1520,6 +1573,139 @@ ${trimmed}
                         All documents created with {hospitalConfig.name} branding. Review and customize as needed.
                       </Typography>
                     </Alert>
+
+                    {/* Document Signatories Section */}
+                    <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon color="primary">badge</Icon>
+                        Document Signatories
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {/* PREPARED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>PREPARED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === preparedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setPreparedBy({ ...preparedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setPreparedBy({ ...preparedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={preparedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={preparedBy.date}
+                            onChange={(e) => setPreparedBy({ ...preparedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+
+                        {/* REVIEWED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>REVIEWED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === reviewedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setReviewedBy({ ...reviewedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setReviewedBy({ ...reviewedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={reviewedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={reviewedBy.date}
+                            onChange={(e) => setReviewedBy({ ...reviewedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+
+                        {/* APPROVED BY */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>APPROVED BY</Typography>
+                          <Autocomplete
+                            size="small"
+                            options={employees}
+                            getOptionLabel={(option) => option.name}
+                            value={employees.find(e => e.name === approvedBy.name) || null}
+                            onChange={(_, newValue) => {
+                              if (newValue) {
+                                setApprovedBy({ ...approvedBy, name: newValue.name, designation: newValue.designation });
+                              } else {
+                                setApprovedBy({ ...approvedBy, name: '', designation: '' });
+                              }
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Select Name" />}
+                            sx={{ mb: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Designation"
+                            value={approvedBy.designation}
+                            InputProps={{ readOnly: true }}
+                            sx={{ mb: 1, bgcolor: 'white' }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Date"
+                            type="date"
+                            value={approvedBy.date}
+                            onChange={(e) => setApprovedBy({ ...approvedBy, date: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ bgcolor: 'white' }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Box sx={{ mt: 2, textAlign: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={<Icon>check</Icon>}
+                          onClick={applySignatoriesToDocuments}
+                        >
+                          Apply to All Documents
+                        </Button>
+                      </Box>
+                    </Paper>
 
                     {generatedContents.map((gc, index) => (
                       <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 2 }}>

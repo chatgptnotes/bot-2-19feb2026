@@ -295,13 +295,9 @@ export async function getRelevantData(evidenceType: string): Promise<{
     data.patients = getRandomPatients(realPatients, 8);
   }
 
-  // Staff-related evidence - fetch REAL staff from Supabase
-  if (type.includes('staff') || type.includes('training') || type.includes('credential') ||
-      type.includes('employee') || type.includes('roster') || type.includes('duty') ||
-      type.includes('competency') || type.includes('performance')) {
-    const realStaff = await fetchRealStaff(10);
-    data.staff = getRandomStaff(realStaff, 5);
-  }
+  // ALWAYS fetch staff data - needed for PREPARED BY / REVIEWED BY sections in all documents
+  const realStaff = await fetchRealStaff(10);
+  data.staff = getRandomStaff(realStaff, 5);
 
   // Equipment-related evidence (hardcoded for now)
   if (type.includes('equipment') || type.includes('calibration') || type.includes('maintenance') ||
