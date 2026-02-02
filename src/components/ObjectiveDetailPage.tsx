@@ -41,7 +41,7 @@ import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
 import { ASSIGNEE_OPTIONS, getHospitalInfo, getNABHCoordinator } from '../config/hospitalConfig';
-import { getClaudeApiKey, callGeminiAPI } from '../lib/supabase';
+import { getClaudeApiKey, getGeminiApiKey, callGeminiAPI } from '../lib/supabase';
 import {
   saveObjectiveToSupabase,
   loadObjectiveFromSupabase,
