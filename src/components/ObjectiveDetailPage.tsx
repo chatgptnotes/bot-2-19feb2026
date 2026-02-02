@@ -139,6 +139,8 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
   const [isSavingInterpretation, setIsSavingInterpretation] = useState(false);
   const [interpretationSaveSuccess, setInterpretationSaveSuccess] = useState(false);
+  const [lastSavedInterpretation, setLastSavedInterpretation] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // Start as true to enable button initially
 
   // State for Evidence Generation Modal
   const [showEvidenceGenerationModal, setShowEvidenceGenerationModal] = useState(false);
@@ -305,6 +307,11 @@ export default function ObjectiveDetailPage() {
         console.warn('Could not load from Supabase:', error);
       } finally {
         setIsLoadingFromDb(false);
+        // Initialize lastSavedInterpretation after loading (keep hasUnsavedChanges as true initially)
+        if (objective) {
+          const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
+          setLastSavedInterpretation(currentText);
+        }
       }
     };
 
@@ -2843,6 +2850,10 @@ Provide only the Hindi explanation, no English text. The explanation should be c
   // Handle interpretation change - saves to interpretations2 (user-editable field)
   const handleInterpretationChange = (newInterpretation: string) => {
     handleFieldChange('interpretations2', newInterpretation);
+    // Mark as unsaved if different from last saved version
+    setHasUnsavedChanges(newInterpretation !== lastSavedInterpretation);
+    // Clear success state when user starts editing
+    setInterpretationSaveSuccess(false);
   };
 
   // Save infographic to Supabase using the objective_edits table
@@ -3126,10 +3137,10 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
-                color="primary"
+                color={!hasUnsavedChanges && interpretationSaveSuccess ? "success" : "primary"}
                 size="small"
-                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : <Icon>save</Icon>}
-                disabled={isSavingInterpretation}
+                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : !hasUnsavedChanges && interpretationSaveSuccess ? <Icon>check</Icon> : <Icon>save</Icon>}
+                disabled={isSavingInterpretation || !hasUnsavedChanges}
                 onClick={async () => {
                   setIsSavingInterpretation(true);
                   try {
@@ -3162,10 +3173,14 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         });
                       }
 
-                      setInterpretationSaveSuccess(true);
-                      setTimeout(() => setInterpretationSaveSuccess(false), 3000);
-                      // Also generate Hindi explanation
+                      // Mark as saved
                       const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
+                      setLastSavedInterpretation(currentText);
+                      setHasUnsavedChanges(false);
+                      setInterpretationSaveSuccess(true);
+                      // Don't clear success state - it will clear when user edits
+
+                      // Also generate Hindi explanation
                       if (currentText.trim()) {
                         await handleGenerateHindiExplanation(currentText);
                       }
@@ -3178,7 +3193,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 }}
                 sx={{ minWidth: 100 }}
               >
-                {isSavingInterpretation ? 'Saving...' : 'Save'}
+                {isSavingInterpretation ? 'Saving...' : !hasUnsavedChanges && interpretationSaveSuccess ? 'Saved' : 'Save'}
               </Button>
               <Button
                 variant="outlined"
@@ -3253,16 +3268,6 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                   ))}
                 </Box>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    startIcon={<Icon>add</Icon>}
-                    onClick={handleAddSelectedInterpretationEvidence}
-                    disabled={!interpretationEvidenceItems.some(item => item.selected && item.id !== 'error')}
-                  >
-                    Add Selected to Evidence List
-                  </Button>
                   <Button
                     variant="outlined"
                     size="small"
@@ -3670,19 +3675,6 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             sx={expandableTextFieldSx}
           />
 
-          {/* Evidence List - Where the 8 generated items are added */}
-          <TextField
-            fullWidth
-            label="Evidence List (Generated Items)"
-            value={objective.evidencesList}
-            onChange={(e) => handleFieldChange('evidencesList', e.target.value)}
-            multiline
-            minRows={4}
-            size="small"
-            placeholder="Generated evidence items will appear here. Use the 'Add Selected to Evidence List' button above to add them..."
-            sx={expandableTextFieldSx}
-            helperText="Evidence items added from the 8 generated items above will appear here"
-          />
 
           {/* File Upload */}
           <Box>
