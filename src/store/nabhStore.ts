@@ -357,19 +357,6 @@ export const useNABHStore = create<NABHStore>()(
     {
       name: 'nabh-chapters-controlled',
       version: 1,
-      partialize: (state) => ({
-        // Only persist these fields - exclude selectedEvidenceForCreation (temporary navigation state)
-        chapters: state.chapters,
-        selectedChapter: state.selectedChapter,
-        selectedObjective: state.selectedObjective,
-        searchQuery: state.searchQuery,
-        filterStatus: state.filterStatus,
-        filterPriority: state.filterPriority,
-        filterCategory: state.filterCategory,
-        showCoreOnly: state.showCoreOnly,
-        selectedHospital: state.selectedHospital,
-        isLoadingFromSupabase: state.isLoadingFromSupabase,
-      }),
       migrate: () => {
         // Fresh start - all data comes from nabh_chapters table + nabh_objective_edits
         // Reset to empty state and let loadDataFromSupabase populate
