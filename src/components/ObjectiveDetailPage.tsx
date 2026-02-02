@@ -237,6 +237,21 @@ export default function ObjectiveDetailPage() {
   const [uploadedDocumentFile, setUploadedDocumentFile] = useState<File | null>(null);
   // @ts-expect-error - Unused but kept for future use
   const [uploadedDocumentPreview, setUploadedDocumentPreview] = useState<string>('');
+
+  // Helper function to convert numbers to Roman numerals
+  const toRomanNumeral = (num: number): string => {
+    const romanNumerals: [number, string][] = [
+      [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+    ];
+    let result = '';
+    for (const [value, numeral] of romanNumerals) {
+      while (num >= value) {
+        result += numeral;
+        num -= value;
+      }
+    }
+    return result;
+  };
   const [extractedDocumentText, setExtractedDocumentText] = useState('');
   // @ts-expect-error - Unused but kept for future use
   const [isExtractingText, setIsExtractingText] = useState(false);
@@ -1200,7 +1215,7 @@ Start directly with the numbered list, no introduction or explanation.`;
           <h3>Evidence Items (${interpretationEvidenceItems.length})</h3>
           ${interpretationEvidenceItems.map((item, idx) => `
             <div class="evidence-item">
-              <strong>${idx + 1}.</strong> ${item.text}
+              <strong>${toRomanNumeral(idx + 1)}.</strong> ${item.text}
             </div>
           `).join('')}
         </div>
@@ -3291,7 +3306,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         color="success"
                       />
                       <Typography variant="body2" sx={{ flex: 1 }}>
-                        {idx + 1}. {item.text}
+                        {toRomanNumeral(idx + 1)}. {item.text}
                       </Typography>
                     </Box>
                   ))}
