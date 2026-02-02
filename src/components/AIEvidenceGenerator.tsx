@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -40,6 +40,7 @@ import {
   type InfographicTemplate,
   type ColorScheme,
 } from '../services/infographicGenerator';
+import { getRelevantData } from '../services/hopeHospitalDatabase';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -473,7 +474,7 @@ async function callClaudeText(apiKey: string, prompt: string, userMessage: strin
 }
 
 export default function AIEvidenceGenerator() {
-  const { chapters, selectedHospital } = useNABHStore();
+  const { chapters, selectedHospital, selectedEvidenceForCreation, clearSelectedEvidenceForCreation } = useNABHStore();
   const currentHospital = getHospitalInfo(selectedHospital);
   
   const [activeTab, setActiveTab] = useState(0);
@@ -534,6 +535,20 @@ export default function AIEvidenceGenerator() {
 
   // Document view mode state (for each document: 0 = HTML preview, 1 = Edit text)
   const [documentViewModes, setDocumentViewModes] = useState<Record<number, number>>({});
+
+  // Auto-populate from store if navigated from ObjectiveDetailPage
+  useEffect(() => {
+    if (selectedEvidenceForCreation && selectedEvidenceForCreation.length > 0) {
+      const items: EvidenceItem[] = selectedEvidenceForCreation.map((item, index) => ({
+        id: item.id || `evidence-${index + 1}`,
+        text: item.text,
+        selected: item.selected,
+      }));
+      setEvidenceItems(items);
+      setActiveStep(1); // Skip to Step 2 (Select Evidences)
+      clearSelectedEvidenceForCreation(); // Clear after use
+    }
+  }, [selectedEvidenceForCreation, clearSelectedEvidenceForCreation]);
 
   const selectedChapterData = chapters.find(c => c.id === selectedChapter);
   const objectives = selectedChapterData?.objectives || [];
@@ -691,7 +706,41 @@ export default function AIEvidenceGenerator() {
       const item = selectedItems[i];
       setContentProgress({ current: i + 1, total: selectedItems.length });
 
-      const userMessage = `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
+      // Fetch real patient/staff data from nabh_patients table
+      const relevantData = await getRelevantData(item.text);
+
+      // Build data context with real patient data
+      let dataContext = '';
+
+      if (relevantData.patients && relevantData.patients.length > 0) {
+        dataContext += '\n\n=== REAL PATIENT DATA FROM DATABASE (Use these EXACT values) ===\n';
+        relevantData.patients.forEach((p: { visit_id: string; patient_name: string; diagnosis?: string | null; admission_date?: string | null; discharge_date?: string | null; status: string }, idx: number) => {
+          dataContext += `Patient ${idx + 1}:\n`;
+          dataContext += `  - Visit ID/UHID: ${p.visit_id}\n`;
+          dataContext += `  - Patient Name: ${p.patient_name}\n`;
+          dataContext += `  - Diagnosis: ${p.diagnosis || 'General'}\n`;
+          dataContext += `  - Admission Date: ${p.admission_date || 'N/A'}\n`;
+          dataContext += `  - Discharge Date: ${p.discharge_date || 'N/A'}\n`;
+          dataContext += `  - Status: ${p.status}\n\n`;
+        });
+      }
+
+      if (relevantData.staff && relevantData.staff.length > 0) {
+        dataContext += '\n=== REAL STAFF DATA FROM DATABASE (Use these EXACT values) ===\n';
+        relevantData.staff.forEach((s: { name: string; role: string; designation: string; department: string }, idx: number) => {
+          dataContext += `Staff ${idx + 1}:\n`;
+          dataContext += `  - Name: ${s.name}\n`;
+          dataContext += `  - Role: ${s.role}\n`;
+          dataContext += `  - Designation: ${s.designation}\n`;
+          dataContext += `  - Department: ${s.department}\n\n`;
+        });
+      }
+
+      if (dataContext) {
+        dataContext += '\nCRITICAL INSTRUCTION: You MUST use the EXACT patient names, Visit IDs, admission dates, and discharge dates from the data above. Do NOT use dummy data like "John Doe" or "1234567". Fill the document with REAL patient records provided.';
+      }
+
+      const userMessage = `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}${dataContext}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
 
       try {
         let content: string;

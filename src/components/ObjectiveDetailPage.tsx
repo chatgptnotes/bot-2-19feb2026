@@ -91,7 +91,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 export default function ObjectiveDetailPage() {
   const { chapterId, objectiveId } = useParams<{ chapterId: string; objectiveId: string }>();
   const navigate = useNavigate();
-  const { chapters, updateObjective, setSelectedChapter, isLoadingFromSupabase, loadDataFromSupabase, selectedHospital } = useNABHStore();
+  const { chapters, updateObjective, setSelectedChapter, isLoadingFromSupabase, loadDataFromSupabase, selectedHospital, setSelectedEvidenceForCreation } = useNABHStore();
   
   // Load data if not already loaded
   useEffect(() => {
@@ -3274,6 +3274,20 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                     onClick={() => setInterpretationEvidenceItems([])}
                   >
                     Clear
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    startIcon={<Icon>auto_awesome</Icon>}
+                    onClick={() => {
+                      const selectedItems = interpretationEvidenceItems.filter(item => item.selected);
+                      setSelectedEvidenceForCreation(selectedItems);
+                      navigate('/ai-generator');
+                    }}
+                    disabled={!interpretationEvidenceItems.some(item => item.selected)}
+                  >
+                    Evidence Creator
                   </Button>
                 </Box>
               </Box>
