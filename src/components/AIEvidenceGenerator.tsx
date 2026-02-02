@@ -131,6 +131,7 @@ Use this HTML template structure:
     .revision-table th { background: #455a64; color: white; padding: 8px; }
     .revision-table td { border: 1px solid #ddd; padding: 8px; }
     .stamp-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; color: #999; }
+    .objective-line { font-size: 12px; color: #333; margin: 15px 0; font-weight: 500; }
     @media print { body { padding: 0; } .no-print { display: none; } }
   </style>
 </head>
@@ -138,6 +139,8 @@ Use this HTML template structure:
   <div class="header">
     <div class="logo-area"><img src="https://www.nabh.online/assets/hope-hospital-logo.png" alt="${config.name} Logo" /></div>
   </div>
+
+  <div class="objective-line">[OBJECTIVE_CODE_AND_TITLE]</div>
 
   <div class="doc-title">[DOCUMENT TITLE]</div>
 
@@ -831,7 +834,21 @@ export default function AIEvidenceGenerator() {
         dataContext += '\n5. Fill ALL name fields with actual names from the database provided above.';
       }
 
-      const userMessage = `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}${dataContext}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
+      // Build NABH objective info for the document header
+      const selectedObj = objectives.find(o => o.id === selectedObjective);
+      const objectiveInfo = selectedObj
+        ? `${selectedObj.code} - ${selectedObj.title}`
+        : description.substring(0, 100);
+
+      const userMessage = `NABH OBJECTIVE (Include this EXACT value in the objective-line section of the HTML):
+${objectiveInfo}
+
+Objective Element: ${description}
+
+Evidence Item to Generate:
+${item.text}${dataContext}
+
+Generate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified. Make sure to fill in the objective-line with the NABH Objective value provided above.`;
 
       try {
         let content: string;
