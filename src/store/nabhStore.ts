@@ -58,6 +58,7 @@ interface NABHStore {
   showCoreOnly: boolean;
   selectedHospital: string; // New state for selected hospital
   isLoadingFromSupabase: boolean;
+  selectedEvidenceForCreation: { id: string; text: string; selected: boolean }[];
 
   setSelectedChapter: (chapterId: string | null) => void;
   setSelectedObjective: (objectiveId: string | null) => void;
@@ -67,6 +68,8 @@ interface NABHStore {
   setFilterCategory: (category: ElementCategory | 'all') => void;
   setShowCoreOnly: (show: boolean) => void;
   setSelectedHospital: (hospitalId: string) => void; // New action
+  setSelectedEvidenceForCreation: (items: { id: string; text: string; selected: boolean }[]) => void;
+  clearSelectedEvidenceForCreation: () => void;
   updateObjective: (chapterId: string, objectiveId: string, updates: Partial<ObjectiveElement>) => void;
   getFilteredObjectives: (chapterId: string) => ObjectiveElement[];
   loadDataFromSupabase: () => Promise<void>;
@@ -87,6 +90,7 @@ export const useNABHStore = create<NABHStore>()(
       showCoreOnly: false,
       selectedHospital: 'hope', // Default hospital
       isLoadingFromSupabase: false,
+      selectedEvidenceForCreation: [],
 
       setSelectedChapter: (chapterId) => set({ selectedChapter: chapterId, selectedObjective: null }),
       setSelectedObjective: (objectiveId) => set({ selectedObjective: objectiveId }),
@@ -96,6 +100,8 @@ export const useNABHStore = create<NABHStore>()(
       setFilterCategory: (category) => set({ filterCategory: category }),
       setShowCoreOnly: (show) => set({ showCoreOnly: show }),
       setSelectedHospital: (hospitalId) => set({ selectedHospital: hospitalId }), // New action implementation
+      setSelectedEvidenceForCreation: (items) => set({ selectedEvidenceForCreation: items }),
+      clearSelectedEvidenceForCreation: () => set({ selectedEvidenceForCreation: [] }),
 
       updateObjective: (chapterId, objectiveId, updates) =>
         set((state) => ({
@@ -351,6 +357,19 @@ export const useNABHStore = create<NABHStore>()(
     {
       name: 'nabh-chapters-controlled',
       version: 1,
+      partialize: (state) => ({
+        // Only persist these fields - exclude selectedEvidenceForCreation (temporary navigation state)
+        chapters: state.chapters,
+        selectedChapter: state.selectedChapter,
+        selectedObjective: state.selectedObjective,
+        searchQuery: state.searchQuery,
+        filterStatus: state.filterStatus,
+        filterPriority: state.filterPriority,
+        filterCategory: state.filterCategory,
+        showCoreOnly: state.showCoreOnly,
+        selectedHospital: state.selectedHospital,
+        isLoadingFromSupabase: state.isLoadingFromSupabase,
+      }),
       migrate: () => {
         // Fresh start - all data comes from nabh_chapters table + nabh_objective_edits
         // Reset to empty state and let loadDataFromSupabase populate
@@ -365,6 +384,7 @@ export const useNABHStore = create<NABHStore>()(
           showCoreOnly: false,
           selectedHospital: 'hope',
           isLoadingFromSupabase: false,
+          selectedEvidenceForCreation: [],
         };
       },
     }
