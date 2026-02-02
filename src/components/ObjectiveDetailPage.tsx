@@ -307,10 +307,12 @@ export default function ObjectiveDetailPage() {
         console.warn('Could not load from Supabase:', error);
       } finally {
         setIsLoadingFromDb(false);
-        // Initialize lastSavedInterpretation after loading (keep hasUnsavedChanges as true initially)
+        // Initialize lastSavedInterpretation after loading and mark as saved
         if (objective) {
           const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
           setLastSavedInterpretation(currentText);
+          setHasUnsavedChanges(false); // Mark as saved on load
+          setInterpretationSaveSuccess(false); // Clear any previous success state
         }
       }
     };
