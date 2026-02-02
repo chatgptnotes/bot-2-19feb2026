@@ -3240,6 +3240,33 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                   <Icon color="success">checklist</Icon>
                   Generated Evidence Items ({interpretationEvidenceItems.length})
                 </Typography>
+                <Box sx={{ mb: 1, display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    startIcon={<Icon>check_box</Icon>}
+                    onClick={() => {
+                      setInterpretationEvidenceItems(items =>
+                        items.map(item => ({ ...item, selected: true }))
+                      );
+                    }}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Icon>check_box_outline_blank</Icon>}
+                    onClick={() => {
+                      setInterpretationEvidenceItems(items =>
+                        items.map(item => ({ ...item, selected: false }))
+                      );
+                    }}
+                  >
+                    Deselect All
+                  </Button>
+                </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {interpretationEvidenceItems.map((item, idx) => (
                     <Box

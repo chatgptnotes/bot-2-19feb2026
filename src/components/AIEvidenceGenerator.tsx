@@ -88,6 +88,7 @@ Use this HTML template structure:
   <meta charset="UTF-8">
   <title>[Document Title] - ${config.name}</title>
   <style>
+    html { height: 100%; overflow-y: auto; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
     .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
@@ -318,6 +319,7 @@ function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalC
   <meta charset="UTF-8">
   <title>${title || 'Evidence Document'} - ${hospitalConfig.name}</title>
   <style>
+    html { height: 100%; overflow-y: auto; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
     .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
@@ -935,6 +937,7 @@ export default function AIEvidenceGenerator() {
 <head>
   <meta charset="UTF-8">
   <style>
+    html { height: 100%; overflow-y: auto; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
   </style>
