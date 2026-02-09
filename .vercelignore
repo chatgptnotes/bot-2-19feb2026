@@ -1,0 +1,6 @@
+# .vercelignore
+auto-approve-agent/
+*.mov
+*.mp4
+*.avi
+zoom.mov
