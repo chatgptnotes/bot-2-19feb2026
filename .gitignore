@@ -50,3 +50,4 @@ Thumbs.db
 
 # Auto-approve agent
 auto-approve-agent/
+tsconfig.tsbuildinfo
