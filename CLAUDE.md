@@ -2,9 +2,8 @@
 
 ## TECH STACK
 - React 18 + TypeScript
-- Vite build system
-- Material UI (MUI)
-- Zustand state management
+- Next.js 14
+- Tailwind CSS
 - Supabase backend
 - Vercel deployment
 

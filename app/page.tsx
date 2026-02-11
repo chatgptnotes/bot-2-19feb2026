@@ -11,6 +11,7 @@ import CronJobs from './components/CronJobs';
 import HospitalStatus from './components/HospitalStatus';
 import ProjectsOverview from './components/ProjectsOverview';
 import ZoomMeetings from './components/ZoomMeetings';
+import ConnectedDevices from './components/ConnectedDevices';
 import { RefreshCw } from 'lucide-react';
 
 interface DashboardData {
@@ -32,8 +33,6 @@ export default function Dashboard() {
       const response = await fetch('/api/tasks');
       const result = await response.json();
       setData(result);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -64,6 +63,11 @@ export default function Dashboard() {
 
         {/* Real-Time Status Bar */}
         <RealTimeStatusBar />
+
+        {/* Connected Devices */}
+        <div className="mb-6">
+          <ConnectedDevices />
+        </div>
 
         {/* Action Bar with Refresh and Notifications */}
         <div className="flex items-center justify-between mb-6">

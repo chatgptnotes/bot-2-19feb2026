@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Video, Upload, Download, FileText, Clock, Calendar, Trash2, Play, Search } from 'lucide-react';
+import { DAYS_IN_WEEK } from '@/lib/utils';
 
 interface Transcript {
   filename: string;
@@ -31,8 +32,6 @@ export default function ZoomMeetings() {
       const response = await fetch('/api/zoom/transcripts');
       const data = await response.json();
       setTranscripts(data.transcripts || []);
-    } catch (error) {
-      console.error('Failed to fetch transcripts:', error);
     } finally {
       setLoading(false);
     }
@@ -59,8 +58,7 @@ export default function ZoomMeetings() {
         const error = await response.json();
         alert(`Transcription failed: ${error.error}`);
       }
-    } catch (error) {
-      console.error('Upload failed:', error);
+    } catch {
       alert('Upload failed. Please try again.');
     } finally {
       setUploading(false);
@@ -73,8 +71,8 @@ export default function ZoomMeetings() {
       const data = await response.json();
       setTranscriptContent(data.content);
       setSelectedTranscript(filename);
-    } catch (error) {
-      console.error('Failed to load transcript:', error);
+    } catch {
+      // Silently fail - user will see no content loaded
     }
   };
 
@@ -100,8 +98,8 @@ export default function ZoomMeetings() {
           setTranscriptContent('');
         }
       }
-    } catch (error) {
-      console.error('Failed to delete transcript:', error);
+    } catch {
+      alert('Failed to delete transcript. Please try again.');
     }
   };
 
@@ -115,7 +113,7 @@ export default function ZoomMeetings() {
 
     if (filterMode === 'recent') {
       const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      weekAgo.setDate(weekAgo.getDate() - DAYS_IN_WEEK);
       const transcriptDate = new Date(t.date);
       return matchesSearch && transcriptDate >= weekAgo;
     }

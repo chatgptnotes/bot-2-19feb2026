@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
-
-const TRANSCRIPTS_DIR = path.join(os.homedir(), '.openclaw', 'workspace', 'transcripts');
+import { supabaseAdmin } from '@/lib/supabase';
+import { errorResponse } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -14,34 +11,48 @@ export async function GET(
     const type = searchParams.get('type') || 'txt';
     const filename = params.filename;
 
-    let filePath: string;
+    // Query transcript from Supabase
+    const { data, error } = await supabaseAdmin
+      .from('zoom_transcripts')
+      .select('transcript_text, metadata, srt_content')
+      .eq('filename', filename)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Transcript not found' }, { status: 404 });
+      }
+      throw error;
+    }
+
+    let content: string;
     let contentType: string;
     let downloadName: string;
 
     switch (type) {
       case 'json':
-        filePath = path.join(TRANSCRIPTS_DIR, `${filename}.json`);
+        if (!data.metadata) {
+          return NextResponse.json({ error: 'JSON metadata not available' }, { status: 404 });
+        }
+        content = JSON.stringify(data.metadata, null, 2);
         contentType = 'application/json';
         downloadName = filename.replace('.txt', '.json');
         break;
+
       case 'srt':
-        filePath = path.join(TRANSCRIPTS_DIR, `${filename}.srt`);
+        if (!data.srt_content) {
+          return NextResponse.json({ error: 'SRT content not available' }, { status: 404 });
+        }
+        content = data.srt_content;
         contentType = 'text/plain';
         downloadName = filename.replace('.txt', '.srt');
         break;
+
       default:
-        filePath = path.join(TRANSCRIPTS_DIR, filename);
+        content = data.transcript_text;
         contentType = 'text/plain';
         downloadName = filename;
     }
-
-    // Security check
-    const realPath = await fs.realpath(filePath);
-    if (!realPath.startsWith(TRANSCRIPTS_DIR)) {
-      return NextResponse.json({ error: 'Invalid file path' }, { status: 403 });
-    }
-
-    const content = await fs.readFile(filePath);
 
     return new NextResponse(content, {
       headers: {
@@ -50,10 +61,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error downloading file:', error);
-    return NextResponse.json(
-      { error: 'Failed to download file' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to download file', error);
   }
 }

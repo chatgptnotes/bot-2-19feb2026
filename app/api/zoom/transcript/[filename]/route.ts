@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
-
-const TRANSCRIPTS_DIR = path.join(os.homedir(), '.openclaw', 'workspace', 'transcripts');
+import { supabaseAdmin } from '@/lib/supabase';
+import { errorResponse } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -11,23 +8,24 @@ export async function GET(
 ) {
   try {
     const filename = params.filename;
-    const filePath = path.join(TRANSCRIPTS_DIR, filename);
 
-    // Security check: ensure the file is within the transcripts directory
-    const realPath = await fs.realpath(filePath);
-    if (!realPath.startsWith(TRANSCRIPTS_DIR)) {
-      return NextResponse.json({ error: 'Invalid file path' }, { status: 403 });
+    // Query transcript from Supabase
+    const { data, error } = await supabaseAdmin
+      .from('zoom_transcripts')
+      .select('transcript_text')
+      .eq('filename', filename)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Transcript not found' }, { status: 404 });
+      }
+      throw error;
     }
 
-    const content = await fs.readFile(filePath, 'utf-8');
-
-    return NextResponse.json({ content });
+    return NextResponse.json({ content: data.transcript_text });
   } catch (error) {
-    console.error('Error reading transcript:', error);
-    return NextResponse.json(
-      { error: 'Failed to read transcript' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to read transcript', error);
   }
 }
 
@@ -38,28 +36,16 @@ export async function DELETE(
   try {
     const filename = params.filename;
 
-    // Delete all associated files (.txt, .txt.json, .txt.srt)
-    const filesToDelete = [
-      filename,
-      `${filename}.json`,
-      `${filename}.srt`,
-    ];
+    // Delete transcript from Supabase
+    const { error } = await supabaseAdmin
+      .from('zoom_transcripts')
+      .delete()
+      .eq('filename', filename);
 
-    for (const file of filesToDelete) {
-      const filePath = path.join(TRANSCRIPTS_DIR, file);
-      try {
-        await fs.unlink(filePath);
-      } catch (e) {
-        // Ignore if file doesn't exist
-      }
-    }
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting transcript:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete transcript' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to delete transcript', error);
   }
 }

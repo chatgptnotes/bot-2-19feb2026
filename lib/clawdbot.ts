@@ -67,8 +67,7 @@ export function readHeartbeat(): Task[] {
     });
 
     return tasks;
-  } catch (error) {
-    console.error('Error reading HEARTBEAT.md:', error);
+  } catch {
     return [];
   }
 }
@@ -124,8 +123,7 @@ export function readCronJobs(): CronJob[] {
         action: action,
       };
     });
-  } catch (error) {
-    console.error('Error reading cron jobs:', error);
+  } catch {
     return [];
   }
 }
@@ -153,8 +151,7 @@ export function getUserProfile() {
       company: 'DocDRM',
       projects: 50,
     };
-  } catch (error) {
-    console.error('Error reading USER.md:', error);
+  } catch {
     return null;
   }
 }
