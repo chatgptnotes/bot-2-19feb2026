@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
+import AdminSidebar from '@/app/components/AdminSidebar'
 
 export const metadata: Metadata = {
   title: 'ClawdBot Dashboard - Dr. Murali BK',
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <AdminSidebar>
+            {children}
+          </AdminSidebar>
         </AuthProvider>
       </body>
     </html>

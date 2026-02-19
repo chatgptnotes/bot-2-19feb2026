@@ -47,6 +47,23 @@ export interface TranscriptListItem {
   hasSrt: boolean;
 }
 
+// Conversation interfaces
+export interface Conversation {
+  id: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  status: string;
+}
+
+export interface TranscriptEntry {
+  id: string;
+  conversation_id: string;
+  speaker: string;
+  text: string;
+  created_at: string;
+}
+
 // Database type definitions
 export type Database = {
   public: {
@@ -55,6 +72,16 @@ export type Database = {
         Row: ZoomTranscript;
         Insert: Omit<ZoomTranscript, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<ZoomTranscript, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      conversations: {
+        Row: Conversation;
+        Insert: Omit<Conversation, 'id' | 'started_at'>;
+        Update: Partial<Omit<Conversation, 'id' | 'started_at'>>;
+      };
+      transcript_entries: {
+        Row: TranscriptEntry;
+        Insert: Omit<TranscriptEntry, 'id' | 'created_at'>;
+        Update: Partial<Omit<TranscriptEntry, 'id' | 'created_at'>>;
       };
     };
   };

@@ -1,6 +1,7 @@
 'use client';
 
-import { Target, TrendingUp, DollarSign, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Target, TrendingUp, DollarSign, Clock, CheckCircle2, AlertCircle, Award, Users } from 'lucide-react';
 
 interface Mission {
   id: string;
@@ -14,88 +15,123 @@ interface Mission {
   icon: any;
   color: string;
   urgency: string;
-  keyActions: string[];
+  keyActions: Array<{ id: string; text: string; completed: boolean }>;
 }
 
+interface DbMission {
+  id: string;
+  title: string;
+  icon: string;
+  progress: number;
+  deadline: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+  status: 'on-track' | 'at-risk' | 'delayed';
+  key_actions: Array<{ id: string; text: string; completed: boolean }>;
+}
+
+const iconMap: Record<string, any> = {
+  Award: Award,
+  Users: Users,
+  TrendingUp: TrendingUp,
+  DollarSign: DollarSign,
+  Target: Target,
+  Clock: Clock
+};
+
+const colorMap: Record<string, string> = {
+  nabh: 'red',
+  occupancy: 'blue',
+  revenue: 'green',
+  esic: 'orange'
+};
+
 export default function EnhancedMissionCards() {
-  const missions: Mission[] = [
-    {
-      id: 'nabh',
-      title: 'NABH Audit Success',
-      deadline: 'Feb 13-14, 2026',
-      daysLeft: 11,
-      priority: 'critical',
-      progress: 75,
-      current: '77/102',
-      target: '102 elements',
-      icon: Target,
-      color: 'red',
-      urgency: 'CRITICAL - 11 DAYS',
-      keyActions: [
-        'Daily Isaac coordination',
-        'Department head readiness',
-        'Evidence documentation complete',
-        'Staff training verification'
-      ]
-    },
-    {
-      id: 'occupancy',
-      title: 'Hospital Occupancy',
-      deadline: 'April 1, 2026',
-      daysLeft: 58,
-      priority: 'high',
-      progress: 56,
-      current: '42/75',
-      target: '75 beds',
-      icon: TrendingUp,
-      color: 'blue',
-      urgency: 'HIGH - 58 DAYS',
-      keyActions: [
-        'Ayushman: Daily tracking',
-        'Hope: Post-NABH marketing',
-        'Combined growth strategy',
-        'Weekly trend analysis'
-      ]
-    },
-    {
-      id: 'revenue',
-      title: 'Software Revenue',
-      deadline: 'April 1, 2026',
-      daysLeft: 58,
-      priority: 'high',
-      progress: 40,
-      current: '₹12L/mo',
-      target: '₹30L/month',
-      icon: DollarSign,
-      color: 'green',
-      urgency: 'HIGH - 58 DAYS',
-      keyActions: [
-        'bettroi.com: 50+ projects',
-        'DocDRM: Client pipeline',
-        'nabh.online: Priority launch',
-        'Payment collection focus'
-      ]
-    },
-    {
-      id: 'esic',
-      title: 'ESIC Recovery',
-      deadline: 'April 1, 2026',
-      daysLeft: 58,
-      priority: 'high',
-      progress: 65,
-      current: '₹35L',
-      target: '₹1 Crore',
-      icon: Clock,
-      color: 'orange',
-      urgency: 'HIGH - Cash Flow',
-      keyActions: [
-        'Dr. Shivkumar: Feb 10 approval',
-        'Weekly 15-day follow-ups',
-        'MPKAY: ₹38L pending',
-        'Email escalations ready'
-      ]
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchMissions();
+  }, []);
+
+  const fetchMissions = async () => {
+    try {
+      const response = await fetch('/api/missions');
+      if (!response.ok) throw new Error('Failed to fetch missions');
+
+      const dbMissions: DbMission[] = await response.json();
+      const transformedMissions = dbMissions.map(transformMission);
+      setMissions(transformedMissions);
+    } catch (err) {
+      setError('Failed to load missions');
+      console.error('Error fetching missions:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const transformMission = (dbMission: DbMission): Mission => {
+    // Parse YYYY-MM-DD as local midnight, not UTC
+    const [year, month, day] = dbMission.deadline.split('-').map(Number);
+    const deadlineDate = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to midnight for accurate day count
+    const daysLeft = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const priority: 'critical' | 'high' | 'medium' =
+      daysLeft <= 15 ? 'critical' :
+      daysLeft <= 60 ? 'high' : 'medium';
+
+    const urgency =
+      daysLeft <= 15 ? `CRITICAL - ${daysLeft} DAYS` :
+      `HIGH - ${daysLeft} DAYS`;
+
+    const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    // Add defensive checks for unit field
+    const unit = dbMission.unit || 'items';
+    const current = `${dbMission.current_value}${unit === 'lakh' ? 'L' : ''}`;
+    const target = `${dbMission.target_value} ${unit}`;
+
+    return {
+      id: dbMission.id,
+      title: dbMission.title,
+      deadline: formattedDeadline,
+      daysLeft,
+      priority,
+      progress: dbMission.progress,
+      current,
+      target,
+      icon: iconMap[dbMission.icon] || Target,
+      color: colorMap[dbMission.id] || 'blue',
+      urgency,
+      keyActions: dbMission.key_actions || []
+    };
+  };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="border-2 rounded-lg p-6 bg-gray-100 animate-pulse h-80" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -159,10 +195,16 @@ export default function EnhancedMissionCards() {
             {/* Key Actions */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-gray-700 mb-2">Key Actions:</p>
-              {mission.keyActions.map((action, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-xs text-gray-700">{action}</span>
+              {(mission.keyActions || []).map((action) => (
+                <div key={action.id} className="flex items-start gap-2">
+                  {action.completed ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <span className={`text-xs ${action.completed ? 'text-gray-700 line-through' : 'text-gray-700'}`}>
+                    {action.text}
+                  </span>
                 </div>
               ))}
             </div>
