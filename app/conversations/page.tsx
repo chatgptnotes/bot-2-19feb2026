@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon } from 'lucide-react';
+import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages } from 'lucide-react';
 
 interface Conversation {
   id: string;
@@ -17,6 +17,14 @@ interface TranscriptEntry {
   speaker: string;
   text: string;
   created_at: string;
+}
+
+interface ReplyLogEntry {
+  threadId: string;
+  from: string;
+  subject: string;
+  aiReply: string;
+  timestamp: string;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -55,6 +63,13 @@ export default function ConversationsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessagesRef = useRef(chatMessages);
   chatMessagesRef.current = chatMessages;
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [autoReplyStatus, setAutoReplyStatus] = useState<string | null>(null);
+  const [autoReplyTone, setAutoReplyTone] = useState<string>('professional');
+  const [autoReplyCustomInstructions, setAutoReplyCustomInstructions] = useState('');
+  const [replyLogEntries, setReplyLogEntries] = useState<ReplyLogEntry[]>([]);
+  const [autoReplyExpanded, setAutoReplyExpanded] = useState(false);
+  const [showToneSettings, setShowToneSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [entriesError, setEntriesError] = useState<string | null>(null);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
@@ -153,12 +168,6 @@ export default function ConversationsPage() {
         payload.image = imageToSend.base64;
         payload.imageMimeType = imageToSend.mimeType;
       }
-      // Send AI chat history for context (use ref for latest value)
-      if (chatMode === 'ai') {
-        payload.history = chatMessagesRef.current
-          .filter(m => m.mode === 'ai')
-          .map(m => ({ role: m.role, text: m.text }));
-      }
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -185,6 +194,71 @@ export default function ConversationsPage() {
       setSending(false);
     }
   };
+
+  // Toggle auto-reply
+  const toggleAutoReply = async () => {
+    const newState = !autoReplyEnabled;
+    try {
+      const res = await fetch('/api/gmail/auto-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled: newState,
+          tone: autoReplyTone,
+          customInstructions: autoReplyCustomInstructions,
+        }),
+      });
+      if (res.ok) {
+        setAutoReplyEnabled(newState);
+        setAutoReplyStatus(newState ? 'Watching for "test" emails...' : null);
+        if (!newState) setReplyLogEntries([]);
+      }
+    } catch (err) {
+      console.error('Failed to toggle auto-reply:', err);
+    }
+  };
+
+  // Save tone config without toggling
+  const saveToneConfig = async () => {
+    try {
+      const res = await fetch('/api/gmail/auto-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tone: autoReplyTone,
+          customInstructions: autoReplyCustomInstructions,
+        }),
+      });
+      if (res.ok) {
+        setShowToneSettings(false);
+      }
+    } catch (err) {
+      console.error('Failed to save tone config:', err);
+    }
+  };
+
+  // Poll auto-reply when enabled
+  useEffect(() => {
+    if (!autoReplyEnabled) return;
+    const checkAutoReply = async () => {
+      try {
+        const res = await fetch('/api/gmail/auto-reply');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.replyLog) {
+            setReplyLogEntries(data.replyLog);
+          }
+          if (data.replied > 0) {
+            setAutoReplyStatus(`Replied to ${data.replied} email(s)!`);
+            setTimeout(() => setAutoReplyStatus('Watching for "test" emails...'), 5000);
+          }
+        }
+      } catch {}
+    };
+    checkAutoReply();
+    const timer = setInterval(checkAutoReply, 30000);
+    return () => clearInterval(timer);
+  }, [autoReplyEnabled]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -479,29 +553,164 @@ export default function ConversationsPage() {
           ) : (
             <>
               {/* Chat panel when no conversation selected */}
-              <div className="px-6 py-3 bg-gray-50 border-b flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">Chat</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setChatMode('ai')}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      chatMode === 'ai'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    }`}
-                  >
-                    <Bot className="h-3 w-3" /> AI
-                  </button>
-                  <button
-                    onClick={() => setChatMode('whatsapp')}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      chatMode === 'whatsapp'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    }`}
-                  >
-                    <Smartphone className="h-3 w-3" /> WhatsApp
-                  </button>
+              <div className="px-6 py-3 bg-gray-50 border-b">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-900">Chat</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setChatMode('ai')}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        chatMode === 'ai'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      <Bot className="h-3 w-3" /> AI
+                    </button>
+                    <button
+                      onClick={() => setChatMode('whatsapp')}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        chatMode === 'whatsapp'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      <Smartphone className="h-3 w-3" /> WhatsApp
+                    </button>
+                  </div>
+                </div>
+                {/* Auto-Reply Section */}
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  {/* Top row: icon, status, settings gear, toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {autoReplyEnabled ? (
+                        <MailCheck className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Mail className="h-4 w-4 text-gray-400" />
+                      )}
+                      <span className="text-xs text-gray-600">
+                        {autoReplyStatus || 'Gmail Auto-Reply'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowToneSettings(!showToneSettings)}
+                        className="p-1 rounded hover:bg-gray-200 transition-colors"
+                        title="Reply tone settings"
+                      >
+                        <Settings2 className="h-3.5 w-3.5 text-gray-500" />
+                      </button>
+                      {replyLogEntries.length > 0 && (
+                        <>
+                          <button
+                            onClick={() => setAutoReplyExpanded(!autoReplyExpanded)}
+                            className="p-1 rounded hover:bg-gray-200 transition-colors"
+                            title={autoReplyExpanded ? 'Collapse reply log' : 'Expand reply log'}
+                          >
+                            {autoReplyExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5 text-gray-500" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+                            )}
+                          </button>
+                          <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                            {replyLogEntries.length}
+                          </span>
+                        </>
+                      )}
+                      <button
+                        onClick={toggleAutoReply}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoReplyEnabled ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                            autoReplyEnabled ? 'translate-x-4.5' : 'translate-x-0.5'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tone Settings Panel */}
+                  {showToneSettings && (
+                    <div className="mt-2 p-2 bg-white rounded border border-gray-200 space-y-2">
+                      <div>
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+                          Reply Tone
+                        </label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {[
+                            { value: 'professional', label: 'Professional', icon: Globe },
+                            { value: 'friendly', label: 'Friendly', icon: MessageSquare },
+                            { value: 'formal', label: 'Formal', icon: Mail },
+                            { value: 'hindi', label: 'Hindi', icon: Languages },
+                            { value: 'hinglish', label: 'Hinglish', icon: Languages },
+                          ].map(({ value, label, icon: Icon }) => (
+                            <button
+                              key={value}
+                              onClick={() => setAutoReplyTone(value)}
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+                                autoReplyTone === value
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              <Icon className="h-3 w-3" />
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+                          Custom Instructions (optional)
+                        </label>
+                        <textarea
+                          value={autoReplyCustomInstructions}
+                          onChange={(e) => setAutoReplyCustomInstructions(e.target.value)}
+                          placeholder="e.g., Always mention I'll respond in detail within 24 hours..."
+                          rows={2}
+                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+                      <button
+                        onClick={saveToneConfig}
+                        className="w-full px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Save Settings
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Reply Log */}
+                  {autoReplyExpanded && replyLogEntries.length > 0 && (
+                    <div className="mt-2 max-h-48 overflow-y-auto space-y-1.5">
+                      {replyLogEntries.slice().reverse().map((entry, i) => (
+                        <div
+                          key={entry.threadId + '-' + i}
+                          className="p-2 bg-green-50 rounded border border-green-100 text-xs"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-gray-800 truncate max-w-[60%]">
+                              {entry.from.replace(/<.*>/, '').trim()}
+                            </span>
+                            <span className="text-gray-400 text-[10px] flex-shrink-0">
+                              {new Date(entry.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <div className="text-gray-600 truncate mb-1">
+                            Re: {entry.subject}
+                          </div>
+                          <div className="text-gray-700 line-clamp-2">
+                            {entry.aiReply}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
