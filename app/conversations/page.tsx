@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages } from 'lucide-react';
+import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages, Reply, Sparkles, Check, FileText } from 'lucide-react';
 
 interface Conversation {
   id: string;
@@ -25,6 +25,34 @@ interface ReplyLogEntry {
   subject: string;
   aiReply: string;
   timestamp: string;
+}
+
+interface EmailEntry {
+  threadId: string;
+  from: string;
+  subject: string;
+  date: string;
+  snippet: string;
+  messageCount: number;
+  labels: string[];
+}
+
+interface EmailAttachment {
+  filename: string;
+  size: number;
+  sizeHuman: string;
+  mimeType: string;
+  attachmentId: string;
+}
+
+interface EmailDetail {
+  from: string;
+  subject: string;
+  body: string;
+  date: string;
+  contentType: 'html' | 'text';
+  messageId: string;
+  attachments: EmailAttachment[];
 }
 
 function formatDuration(seconds: number | null): string {
@@ -70,6 +98,18 @@ export default function ConversationsPage() {
   const [replyLogEntries, setReplyLogEntries] = useState<ReplyLogEntry[]>([]);
   const [autoReplyExpanded, setAutoReplyExpanded] = useState(false);
   const [showToneSettings, setShowToneSettings] = useState(false);
+  const [leftTab, setLeftTab] = useState<'conversations' | 'emails'>('conversations');
+  const [emails, setEmails] = useState<EmailEntry[]>([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [emailDetail, setEmailDetail] = useState<EmailDetail | null>(null);
+  const [loadingEmailDetail, setLoadingEmailDetail] = useState(false);
+  const [showReplyCompose, setShowReplyCompose] = useState(false);
+  const [replyDraft, setReplyDraft] = useState('');
+  const [replyTone, setReplyTone] = useState<string>('professional');
+  const [generatingReply, setGeneratingReply] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
+  const [replySent, setReplySent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [entriesError, setEntriesError] = useState<string | null>(null);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
@@ -148,8 +188,101 @@ export default function ConversationsPage() {
     }
   }, []);
 
+  const fetchEmails = useCallback(async () => {
+    try {
+      setLoadingEmails(true);
+      const res = await fetch('/api/gmail/inbox');
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      setEmails(data.emails || []);
+    } catch (err: any) {
+      console.error('Failed to fetch emails:', err);
+    } finally {
+      setLoadingEmails(false);
+    }
+  }, []);
+
+  const fetchEmailDetail = useCallback(async (threadId: string) => {
+    try {
+      setLoadingEmailDetail(true);
+      const res = await fetch(`/api/gmail/read?threadId=${threadId}`);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      setEmailDetail(data);
+    } catch (err: any) {
+      console.error('Failed to fetch email detail:', err);
+      setEmailDetail(null);
+    } finally {
+      setLoadingEmailDetail(false);
+    }
+  }, []);
+
+  const handleSelectEmail = (threadId: string) => {
+    setSelectedEmailId(threadId);
+    setSelectedId(null);
+    setShowReplyCompose(false);
+    setReplyDraft('');
+    setReplySent(false);
+    fetchEmailDetail(threadId);
+  };
+
+  const generateAIReply = async () => {
+    if (!selectedEmailId) return;
+    setGeneratingReply(true);
+    try {
+      const res = await fetch('/api/gmail/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate', threadId: selectedEmailId, tone: replyTone }),
+      });
+      if (!res.ok) throw new Error('Generate failed');
+      const data = await res.json();
+      if (data.success) {
+        setReplyDraft(data.generatedReply);
+      }
+    } catch (err: any) {
+      console.error('Failed to generate reply:', err);
+    } finally {
+      setGeneratingReply(false);
+    }
+  };
+
+  const sendEmailReply = async () => {
+    if (!selectedEmailId || !replyDraft.trim()) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch('/api/gmail/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          threadId: selectedEmailId,
+          subject: emailDetail?.subject || '',
+          replyBody: replyDraft,
+        }),
+      });
+      if (!res.ok) throw new Error('Send failed');
+      const data = await res.json();
+      if (data.success) {
+        setReplySent(true);
+        setShowReplyCompose(false);
+        setReplyDraft('');
+        // Update email list to reflect replied status
+        setEmails(prev => prev.map(e =>
+          e.threadId === selectedEmailId ? { ...e, messageCount: e.messageCount + 1 } : e
+        ));
+      }
+    } catch (err: any) {
+      console.error('Failed to send reply:', err);
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   const handleSelect = (id: string) => {
     setSelectedId(id);
+    setSelectedEmailId(null); // deselect email
+    setEmailDetail(null);
     speakerColorMap.current = {};
     fetchEntries(id);
   };
@@ -259,6 +392,13 @@ export default function ConversationsPage() {
     const timer = setInterval(checkAutoReply, 30000);
     return () => clearInterval(timer);
   }, [autoReplyEnabled]);
+
+  // Fetch emails when Emails tab is selected
+  useEffect(() => {
+    if (leftTab === 'emails') {
+      fetchEmails();
+    }
+  }, [leftTab, fetchEmails]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -376,55 +516,319 @@ export default function ConversationsPage() {
 
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Conversations list */}
+        {/* Left: Conversations / Emails list */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-3 bg-gray-50 border-b text-sm font-medium text-gray-500">
-            {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''}
+          {/* Tab Switcher */}
+          <div className="flex border-b">
+            <button
+              onClick={() => setLeftTab('conversations')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                leftTab === 'conversations'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Conversations
+            </button>
+            <button
+              onClick={() => setLeftTab('emails')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                leftTab === 'emails'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Mail className="h-4 w-4" />
+              Emails
+            </button>
           </div>
-          <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
-            {filteredConversations.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                {searchQuery ? 'No conversations match your search' : 'No conversations yet'}
+
+          {leftTab === 'conversations' ? (
+            <>
+              <div className="px-6 py-3 bg-gray-50 border-b text-sm font-medium text-gray-500">
+                {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''}
               </div>
-            ) : (
-              filteredConversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  onClick={() => handleSelect(conv.id)}
-                  className={`px-6 py-4 cursor-pointer transition ${
-                    selectedId === conv.id
-                      ? 'bg-blue-50 border-l-4 border-l-blue-500'
-                      : 'hover:bg-gray-50'
-                  }`}
+              <div className="divide-y divide-gray-200 max-h-[556px] overflow-y-auto">
+                {filteredConversations.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    {searchQuery ? 'No conversations match your search' : 'No conversations yet'}
+                  </div>
+                ) : (
+                  filteredConversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      onClick={() => handleSelect(conv.id)}
+                      className={`px-6 py-4 cursor-pointer transition ${
+                        selectedId === conv.id
+                          ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-900 truncate">
+                          {conv.id.slice(0, 8)}...
+                        </span>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                          conv.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {conv.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(conv.started_at).toLocaleString()}
+                        </span>
+                        <span>{formatDuration(conv.duration_seconds)}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="px-6 py-3 bg-gray-50 border-b flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">
+                  {emails.length} email{emails.length !== 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={fetchEmails}
+                  disabled={loadingEmails}
+                  className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900 truncate">
-                      {conv.id.slice(0, 8)}...
-                    </span>
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                      conv.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {conv.status}
-                    </span>
+                  <RefreshCw className={`h-3.5 w-3.5 ${loadingEmails ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <div className="divide-y divide-gray-200 max-h-[556px] overflow-y-auto">
+                {loadingEmails && emails.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Loader className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    Loading emails...
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(conv.started_at).toLocaleString()}
-                    </span>
-                    <span>{formatDuration(conv.duration_seconds)}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                ) : emails.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No emails found</div>
+                ) : (
+                  emails.map((email) => (
+                    <div
+                      key={email.threadId}
+                      onClick={() => handleSelectEmail(email.threadId)}
+                      className={`px-5 py-3 cursor-pointer transition ${
+                        selectedEmailId === email.threadId
+                          ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900 truncate max-w-[65%]">
+                          {email.from.replace(/<.*>/, '').trim() || email.from}
+                        </span>
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          email.messageCount > 1
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          {email.messageCount > 1 ? 'Replied' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-700 truncate mb-1">
+                        {email.subject}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-gray-400 truncate max-w-[70%]">
+                          {email.snippet}
+                        </span>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">
+                          {email.date ? new Date(email.date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Right: Transcript + Chat */}
+        {/* Right: Transcript + Chat + Email Detail */}
         <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[600px]">
-          {selectedConversation ? (
+          {leftTab === 'emails' && selectedEmailId ? (
+            <>
+              {/* Email Detail View */}
+              <div className="px-6 py-3 bg-gray-50 border-b">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-900 truncate">
+                    {emailDetail?.subject || 'Loading...'}
+                  </span>
+                  {selectedEmailId && emails.find(e => e.threadId === selectedEmailId) && (
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                      (emails.find(e => e.threadId === selectedEmailId)?.messageCount || 0) > 1
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {(emails.find(e => e.threadId === selectedEmailId)?.messageCount || 0) > 1 ? 'Replied' : 'Pending'}
+                    </span>
+                  )}
+                </div>
+                {emailDetail && (
+                  <>
+                    <div className="text-xs text-gray-600">
+                      From: {emailDetail.from}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {emailDetail.date ? new Date(emailDetail.date).toLocaleString() : ''}
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto p-5">
+                {loadingEmailDetail ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Loader className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    Loading email...
+                  </div>
+                ) : emailDetail ? (
+                  <>
+                    {/* Email Body */}
+                    {emailDetail.contentType === 'html' ? (
+                      <div
+                        className="text-sm text-gray-800 leading-relaxed prose prose-sm max-w-none [&_a]:text-blue-600 [&_a]:underline [&_p]:my-2 [&_br]:leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: emailDetail.body }}
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                        {emailDetail.body}
+                      </div>
+                    )}
+
+                    {/* Attachments */}
+                    {emailDetail.attachments.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-200">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                          Attachments ({emailDetail.attachments.length})
+                        </p>
+                        <div className="space-y-2">
+                          {emailDetail.attachments.map((att, i) => (
+                            <a
+                              key={i}
+                              href={`/api/gmail/attachment?messageId=${emailDetail.messageId}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer"
+                            >
+                              <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                                {att.mimeType.startsWith('image/') ? (
+                                  <ImageIcon className="h-4 w-4" />
+                                ) : (
+                                  <FileText className="h-4 w-4" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {att.filename}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; {att.mimeType.split('/')[1]?.toUpperCase() || att.mimeType}
+                                </p>
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                    <p className="text-sm">Failed to load email</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Reply Section */}
+              {emailDetail && (
+                <div className="border-t bg-gray-50 p-3">
+                  {replySent ? (
+                    <div className="flex items-center gap-2 text-green-600 text-sm font-medium justify-center py-2">
+                      <Check className="h-4 w-4" />
+                      Reply sent successfully!
+                    </div>
+                  ) : !showReplyCompose ? (
+                    <button
+                      onClick={() => setShowReplyCompose(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      <Reply className="h-4 w-4" />
+                      Reply
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Tone selector */}
+                      <div className="flex flex-wrap gap-1">
+                        {(['professional', 'friendly', 'formal', 'hindi', 'hinglish'] as const).map((tone) => (
+                          <button
+                            key={tone}
+                            onClick={() => setReplyTone(tone)}
+                            className={`px-2 py-1 rounded text-[11px] font-medium capitalize transition-colors ${
+                              replyTone === tone
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            }`}
+                          >
+                            {tone}
+                          </button>
+                        ))}
+                        <button
+                          onClick={generateAIReply}
+                          disabled={generatingReply}
+                          className="ml-auto flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded text-[11px] font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                        >
+                          {generatingReply ? (
+                            <Loader className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          {generatingReply ? 'Generating...' : 'AI Generate'}
+                        </button>
+                      </div>
+                      {/* Reply textarea */}
+                      <textarea
+                        value={replyDraft}
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        placeholder="Write your reply or click AI Generate..."
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      />
+                      {/* Action buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setShowReplyCompose(false); setReplyDraft(''); }}
+                          className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={sendEmailReply}
+                          disabled={sendingReply || !replyDraft.trim()}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                        >
+                          {sendingReply ? (
+                            <Loader className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                          {sendingReply ? 'Sending...' : 'Send Reply'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : selectedConversation ? (
             <>
               <div className="px-6 py-3 bg-gray-50 border-b flex items-center justify-between">
                 <div>
