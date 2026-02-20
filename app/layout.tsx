@@ -6,6 +6,9 @@ import AdminSidebar from '@/app/components/AdminSidebar'
 export const metadata: Metadata = {
   title: 'ClawdBot Dashboard - Dr. Murali BK',
   description: 'Task management dashboard for ClawdBot assistant',
+  icons: {
+    icon: '/hospital-logo.png',
+  },
 }
 
 export default function RootLayout({
