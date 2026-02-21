@@ -44,6 +44,30 @@ function collectCidParts(parts: any[]): Array<{ cid: string; filename: string; a
   return result;
 }
 
+// Recursively collect attachment parts from MIME structure
+function collectAttachmentParts(parts: any[]): Array<{
+  filename: string;
+  size: number;
+  mimeType: string;
+  attachmentId: string;
+}> {
+  const result: Array<{ filename: string; size: number; mimeType: string; attachmentId: string }> = [];
+  for (const p of parts) {
+    if (p.filename && p.body?.attachmentId) {
+      result.push({
+        filename: p.filename,
+        size: p.body.size || 0,
+        mimeType: p.mimeType || 'application/octet-stream',
+        attachmentId: p.body.attachmentId,
+      });
+    }
+    if (p.parts?.length) {
+      result.push(...collectAttachmentParts(p.parts));
+    }
+  }
+  return result;
+}
+
 // Decode Gmail's URL-safe base64
 function decodeBase64(data: string): string {
   const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
@@ -109,13 +133,28 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const attachments = (msgData.attachments || []).map((att: any) => ({
+    // Try gog-provided attachments first
+    let attachments = (msgData.attachments || []).map((att: any) => ({
       filename: att.filename || 'unknown',
       size: att.size || 0,
       sizeHuman: att.sizeHuman || '',
       mimeType: att.mimeType || 'application/octet-stream',
       attachmentId: att.attachmentId || '',
     }));
+
+    // Fallback: extract attachments from MIME parts if gog didn't provide them
+    if (attachments.length === 0 && parts.length > 0) {
+      const mimeParts = collectAttachmentParts(parts);
+      attachments = mimeParts.map(att => ({
+        filename: att.filename,
+        size: att.size,
+        sizeHuman: att.size > 1024 * 1024
+          ? `${(att.size / 1024 / 1024).toFixed(1)} MB`
+          : `${Math.round(att.size / 1024)} KB`,
+        mimeType: att.mimeType,
+        attachmentId: att.attachmentId,
+      }));
+    }
 
     return NextResponse.json({
       from: msgData.headers?.from || 'Unknown',

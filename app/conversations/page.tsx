@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages, Reply, Sparkles, Check, FileText, PenSquare, ArrowLeft } from 'lucide-react';
+import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages, Reply, Sparkles, Check, FileText, PenSquare, ArrowLeft, Archive, Download, Eye } from 'lucide-react';
 
 interface Conversation {
   id: string;
@@ -53,6 +53,41 @@ interface EmailDetail {
   contentType: 'html' | 'text';
   messageId: string;
   attachments: EmailAttachment[];
+}
+
+interface ZipFileEntry {
+  name: string;
+  path: string;
+  size: number;
+  isDirectory: boolean;
+  lastModified: string | null;
+}
+
+interface ZipContents {
+  zipFilename: string;
+  totalFiles: number;
+  totalSize: number;
+  files: ZipFileEntry[];
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function isZipAttachment(att: EmailAttachment): boolean {
+  if (att.filename.toLowerCase().endsWith('.zip')) return true;
+  return ['application/zip', 'application/x-zip-compressed', 'application/x-zip'].includes(att.mimeType);
+}
+
+function getFileIconColor(ext: string): { color: string; isImage: boolean } {
+  const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+  if (ext === 'pdf') return { color: 'text-red-500', isImage: false };
+  if (imageExts.includes(ext)) return { color: 'text-green-500', isImage: true };
+  return { color: 'text-gray-500', isImage: false };
 }
 
 function formatDuration(seconds: number | null): string {
@@ -113,6 +148,10 @@ export default function ConversationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [entriesError, setEntriesError] = useState<string | null>(null);
   const [hoveredPdfUrl, setHoveredPdfUrl] = useState<string | null>(null);
+  const [inlinePdfUrl, setInlinePdfUrl] = useState<string | null>(null);
+  const [zipContents, setZipContents] = useState<Record<string, ZipContents>>({});
+  const [loadingZips, setLoadingZips] = useState<Set<string>>(new Set());
+  const [zipErrors, setZipErrors] = useState<Record<string, string>>({});
   const [replyDrafts, setReplyDrafts] = useState<Array<{ tone: string; text: string }>>([]);
   const [generatingDrafts, setGeneratingDrafts] = useState(false);
   // Compose email state
@@ -231,6 +270,40 @@ export default function ConversationsPage() {
     }
   }, []);
 
+  // Auto-fetch ZIP contents when email detail loads
+  useEffect(() => {
+    if (!emailDetail) return;
+    const zipAttachments = emailDetail.attachments.filter(
+      att => isZipAttachment(att)
+    );
+    if (zipAttachments.length === 0) return;
+
+    zipAttachments.forEach(async (att) => {
+      if (zipContents[att.attachmentId]) return; // already loaded
+
+      setLoadingZips(prev => new Set(prev).add(att.attachmentId));
+      try {
+        const res = await fetch(
+          `/api/gmail/zip-contents?messageId=${encodeURIComponent(emailDetail.messageId)}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}`
+        );
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to load ZIP contents');
+        }
+        const data: ZipContents = await res.json();
+        setZipContents(prev => ({ ...prev, [att.attachmentId]: data }));
+      } catch (err: any) {
+        setZipErrors(prev => ({ ...prev, [att.attachmentId]: err.message }));
+      } finally {
+        setLoadingZips(prev => {
+          const next = new Set(prev);
+          next.delete(att.attachmentId);
+          return next;
+        });
+      }
+    });
+  }, [emailDetail]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSelectEmail = (threadId: string) => {
     setSelectedEmailId(threadId);
     setSelectedId(null);
@@ -238,6 +311,7 @@ export default function ConversationsPage() {
     setShowReplyCompose(false);
     setReplyDraft('');
     setReplySent(false);
+    setInlinePdfUrl(null);
     fetchEmailDetail(threadId);
   };
 
@@ -958,57 +1032,206 @@ export default function ConversationsPage() {
                           {emailDetail.attachments.map((att, i) => {
                             const attUrl = `/api/gmail/attachment?messageId=${emailDetail.messageId}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}`;
                             const isPdf = att.mimeType === 'application/pdf' || att.filename.toLowerCase().endsWith('.pdf');
-                            return (
-                              <a
-                                key={i}
-                                href={attUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer"
-                                onMouseEnter={() => isPdf && setHoveredPdfUrl(attUrl)}
-                                onMouseLeave={() => isPdf && setHoveredPdfUrl(null)}
-                              >
-                                <div className={`flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center ${
-                                  isPdf ? 'bg-red-100 text-red-600' : att.mimeType.startsWith('image/') ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
-                                }`}>
-                                  {att.mimeType.startsWith('image/') ? (
-                                    <ImageIcon className="h-4 w-4" />
-                                  ) : (
-                                    <FileText className="h-4 w-4" />
+                            const isZip = isZipAttachment(att);
+
+                            if (isZip) {
+                              const zipData = zipContents[att.attachmentId];
+                              const isLoadingThis = loadingZips.has(att.attachmentId);
+                              const zipErr = zipErrors[att.attachmentId];
+
+                              return (
+                                <div key={i} className="border border-yellow-200 rounded-lg overflow-hidden">
+                                  {/* ZIP header */}
+                                  <div className="flex items-center gap-3 p-2.5 bg-yellow-50">
+                                    <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-yellow-100 text-yellow-700">
+                                      <Archive className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">{att.filename}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; ZIP Archive
+                                        {zipData && <span className="ml-1 text-yellow-600">({zipData.totalFiles} files inside)</span>}
+                                      </p>
+                                    </div>
+                                    <a
+                                      href={attUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded bg-white border border-gray-200 hover:border-blue-300"
+                                    >
+                                      <Download className="h-3 w-3" /> Download ZIP
+                                    </a>
+                                  </div>
+
+                                  {/* Loading state */}
+                                  {isLoadingThis && (
+                                    <div className="border-t border-yellow-200 bg-yellow-50/50 px-3 py-3 flex items-center gap-2 text-xs text-yellow-700">
+                                      <Loader className="h-3.5 w-3.5 animate-spin" />
+                                      Loading ZIP contents...
+                                    </div>
+                                  )}
+
+                                  {/* Auto-expanded ZIP contents */}
+                                  {zipData && (
+                                    <div className="border-t border-yellow-200 bg-white">
+                                      <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                                        <span className="text-xs text-gray-500 font-medium">
+                                          {zipData.totalFiles} file{zipData.totalFiles !== 1 ? 's' : ''} &middot; {formatBytes(zipData.totalSize)} total
+                                        </span>
+                                      </div>
+                                      <div className="overflow-y-auto divide-y divide-gray-100">
+                                        {zipData.files
+                                          .filter(f => !f.isDirectory)
+                                          .map((file, fi) => {
+                                            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                                            const extractUrl = `/api/gmail/zip-contents?messageId=${emailDetail.messageId}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}&extract=${encodeURIComponent(file.path)}`;
+                                            const isFilePdf = ext === 'pdf';
+                                            return (
+                                              <div key={fi}>
+                                                <div className="flex items-center gap-3 px-3 py-2 hover:bg-blue-50 transition-colors">
+                                                  <div className="flex-shrink-0 h-7 w-7 rounded flex items-center justify-center bg-gray-100">
+                                                    {(() => {
+                                                      const { color, isImage } = getFileIconColor(ext);
+                                                      return isImage ? <ImageIcon className={`h-3.5 w-3.5 ${color}`} /> : <FileText className={`h-3.5 w-3.5 ${color}`} />;
+                                                    })()}
+                                                  </div>
+                                                  <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-medium text-gray-800 truncate">{file.path}</p>
+                                                    <p className="text-[11px] text-gray-400">
+                                                      {formatBytes(file.size)} &middot; {ext.toUpperCase() || 'FILE'}
+                                                    </p>
+                                                  </div>
+                                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                    {isFilePdf && (
+                                                      <button
+                                                        onClick={() => setInlinePdfUrl(inlinePdfUrl === extractUrl ? null : extractUrl)}
+                                                        className={`flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border transition-colors ${
+                                                          inlinePdfUrl === extractUrl
+                                                            ? 'text-red-600 bg-red-50 border-red-200'
+                                                            : 'text-blue-600 bg-white border-gray-200 hover:border-blue-300'
+                                                        }`}
+                                                      >
+                                                        {inlinePdfUrl === extractUrl ? <X className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
+                                                        {inlinePdfUrl === extractUrl ? 'Close' : 'View'}
+                                                      </button>
+                                                    )}
+                                                    <a
+                                                      href={extractUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="flex items-center"
+                                                    >
+                                                      <Download className="h-3 w-3 text-blue-400" />
+                                                    </a>
+                                                  </div>
+                                                </div>
+                                                {isFilePdf && inlinePdfUrl === extractUrl && (
+                                                  <div className="mx-3 mb-2 rounded-lg border border-gray-300 overflow-hidden bg-white">
+                                                    <div className="bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 border-b flex items-center justify-between">
+                                                      <span className="flex items-center gap-2">
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                        {file.name}
+                                                      </span>
+                                                      <button onClick={() => setInlinePdfUrl(null)} className="text-gray-400 hover:text-gray-600">
+                                                        <X className="h-3.5 w-3.5" />
+                                                      </button>
+                                                    </div>
+                                                    <iframe
+                                                      src={extractUrl}
+                                                      className="w-full border-0"
+                                                      style={{ height: '70vh', minHeight: 400 }}
+                                                      title={`PDF: ${file.name}`}
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        {zipData.files.filter(f => !f.isDirectory).length === 0 && (
+                                          <p className="px-3 py-3 text-xs text-gray-400 text-center">Empty ZIP archive</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Error state */}
+                                  {zipErr && (
+                                    <div className="border-t border-yellow-200 bg-red-50 px-3 py-3 text-xs text-red-600 flex items-center gap-2">
+                                      <AlertCircle className="h-3.5 w-3.5" />
+                                      {zipErr}
+                                    </div>
                                   )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {att.filename}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; {att.mimeType.split('/')[1]?.toUpperCase() || att.mimeType}
-                                    {isPdf && <span className="ml-1 text-blue-500">(hover to preview)</span>}
-                                  </p>
+                              );
+                            }
+
+                            return (
+                              <div key={i}>
+                                <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                                  <div className={`flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center ${
+                                    isPdf ? 'bg-red-100 text-red-600' : att.mimeType.startsWith('image/') ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                                  }`}>
+                                    {att.mimeType.startsWith('image/') ? (
+                                      <ImageIcon className="h-4 w-4" />
+                                    ) : (
+                                      <FileText className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {att.filename}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; {att.mimeType.split('/')[1]?.toUpperCase() || att.mimeType}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {isPdf && (
+                                      <button
+                                        onClick={() => setInlinePdfUrl(inlinePdfUrl === attUrl ? null : attUrl)}
+                                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors ${
+                                          inlinePdfUrl === attUrl
+                                            ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100'
+                                            : 'text-blue-600 bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                                        }`}
+                                      >
+                                        {inlinePdfUrl === attUrl ? <X className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                        {inlinePdfUrl === attUrl ? 'Close' : 'View'}
+                                      </button>
+                                    )}
+                                    <a
+                                      href={attUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded bg-white border border-gray-200 hover:border-blue-300"
+                                    >
+                                      <Download className="h-3 w-3" /> Download
+                                    </a>
+                                  </div>
                                 </div>
-                              </a>
+                                {/* Inline PDF Viewer */}
+                                {isPdf && inlinePdfUrl === attUrl && (
+                                  <div className="mt-1 rounded-lg border border-gray-300 overflow-hidden bg-white">
+                                    <div className="bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 border-b flex items-center justify-between">
+                                      <span className="flex items-center gap-2">
+                                        <FileText className="h-3.5 w-3.5" />
+                                        {att.filename}
+                                      </span>
+                                      <button onClick={() => setInlinePdfUrl(null)} className="text-gray-400 hover:text-gray-600">
+                                        <X className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                    <iframe
+                                      src={attUrl}
+                                      className="w-full border-0"
+                                      style={{ height: '70vh', minHeight: 400 }}
+                                      title={`PDF: ${att.filename}`}
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             );
                           })}
-                          {/* PDF Hover Preview */}
-                          {hoveredPdfUrl && (
-                            <div
-                              className="fixed right-8 top-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden"
-                              style={{ width: 480, height: 600 }}
-                              onMouseEnter={() => setHoveredPdfUrl(hoveredPdfUrl)}
-                              onMouseLeave={() => setHoveredPdfUrl(null)}
-                            >
-                              <div className="bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 border-b flex items-center gap-2">
-                                <FileText className="h-3.5 w-3.5" />
-                                PDF Preview
-                              </div>
-                              <iframe
-                                src={hoveredPdfUrl}
-                                className="w-full border-0"
-                                style={{ height: 'calc(100% - 32px)' }}
-                                title="PDF Preview"
-                              />
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
