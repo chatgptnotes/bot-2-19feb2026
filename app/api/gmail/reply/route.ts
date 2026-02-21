@@ -13,7 +13,7 @@ const account = 'chatgptnotes@gmail.com';
 const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY || '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-type TonePreset = 'professional' | 'friendly' | 'formal' | 'hindi' | 'hinglish';
+type TonePreset = 'professional' | 'friendly' | 'formal' | 'hindi' | 'hinglish' | 'short';
 
 const toneInstructions: Record<TonePreset, string> = {
   professional: 'Write a professional, concise reply. Be polite and to the point.',
@@ -21,7 +21,27 @@ const toneInstructions: Record<TonePreset, string> = {
   formal: 'Write a very formal reply. Use proper salutations and formal language throughout.',
   hindi: 'Reply entirely in Hindi (Devanagari script). Be polite and helpful.',
   hinglish: 'Reply in Hinglish (mix of Hindi and English, Roman script). Be friendly and natural.',
+  short: 'Write a very short, crisp reply in 1-2 sentences only. Be direct.',
 };
+
+async function callGeminiForReply(prompt: string): Promise<string> {
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini API error (${res.status}): ${errText}`);
+  }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No reply generated from Gemini');
+  return text.trim();
+}
 
 // POST: Generate AI reply or send reply
 export async function POST(request: NextRequest) {
@@ -31,6 +51,37 @@ export async function POST(request: NextRequest) {
 
     if (!threadId) {
       return NextResponse.json({ error: 'threadId is required' }, { status: 400 });
+    }
+
+    // Action: generate-drafts - Generate 3 draft replies via OpenClaw
+    if (action === 'generate-drafts') {
+      const getCmd = `gog gmail get "${threadId}" -j --account ${account}`;
+      const { stdout: emailStdout } = await execAsync(getCmd, { timeout: 15000, env: gogEnv });
+      const msgData = JSON.parse(emailStdout);
+
+      const from = msgData.headers?.from || 'Unknown';
+      const emailSubject = msgData.headers?.subject || 'No subject';
+      const emailBody = (msgData.body || '(no body)').slice(0, 2000);
+
+      const tones: { key: TonePreset; label: string }[] = [
+        { key: 'professional', label: 'Professional' },
+        { key: 'formal', label: 'Formal' },
+        { key: 'short', label: 'Short' },
+      ];
+
+      const drafts = await Promise.all(
+        tones.map(async ({ key, label }) => {
+          try {
+            const prompt = `You are an email reply assistant for Dr. Murali BK. Read this email and write a reply. ${toneInstructions[key]} Don't use markdown. Plain text only. Write ONLY the reply text.\n\nFrom: ${from}\nSubject: ${emailSubject}\nBody:\n${emailBody}`;
+            const text = await callGeminiForReply(prompt);
+            return { tone: label, text: text.trim() };
+          } catch {
+            return { tone: label, text: `(Failed to generate ${label} draft)` };
+          }
+        })
+      );
+
+      return NextResponse.json({ success: true, drafts, subject: emailSubject });
     }
 
     // Action: generate - Generate AI reply text

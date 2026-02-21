@@ -11,8 +11,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 // Pass OpenClaw env vars to child processes
 const openclawEnv = {
   ...process.env,
-  OPENCLAW_HOST: process.env.OPENCLAW_HOST || 'http://192.168.1.13',
-  OPENCLAW_PORT: process.env.OPENCLAW_PORT || '18789',
+  OPENCLAW_HOST: process.env.OPENCLAW_HOST || 'https://hopetech.me/openclaw',
   OPENCLAW_GATEWAY_TOKEN: process.env.OPENCLAW_GATEWAY_TOKEN || '',
   OPENCLAW_HOOK_TOKEN: process.env.OPENCLAW_HOOK_TOKEN || '',
   PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',

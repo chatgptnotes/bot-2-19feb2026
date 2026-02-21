@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages, Reply, Sparkles, Check, FileText } from 'lucide-react';
+import { Search, RefreshCw, MessageSquare, Clock, Send, Bot, Smartphone, Loader, AlertCircle, WifiOff, Paperclip, X, Image as ImageIcon, Mail, MailCheck, ChevronDown, ChevronUp, Settings2, Globe, Languages, Reply, Sparkles, Check, FileText, PenSquare, ArrowLeft } from 'lucide-react';
 
 interface Conversation {
   id: string;
@@ -112,6 +112,20 @@ export default function ConversationsPage() {
   const [replySent, setReplySent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [entriesError, setEntriesError] = useState<string | null>(null);
+  const [hoveredPdfUrl, setHoveredPdfUrl] = useState<string | null>(null);
+  const [replyDrafts, setReplyDrafts] = useState<Array<{ tone: string; text: string }>>([]);
+  const [generatingDrafts, setGeneratingDrafts] = useState(false);
+  // Compose email state
+  const [showCompose, setShowCompose] = useState(false);
+  const [composeTo, setComposeTo] = useState('');
+  const [composeCc, setComposeCc] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
+  const [sendingCompose, setSendingCompose] = useState(false);
+  const [composeSent, setComposeSent] = useState(false);
+  const [generatingComposeBody, setGeneratingComposeBody] = useState(false);
+  const [showComposeCc, setShowComposeCc] = useState(false);
+  const [emailFolder, setEmailFolder] = useState<'inbox' | 'sent'>('inbox');
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
   const entriesEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -191,7 +205,7 @@ export default function ConversationsPage() {
   const fetchEmails = useCallback(async () => {
     try {
       setLoadingEmails(true);
-      const res = await fetch('/api/gmail/inbox');
+      const res = await fetch(`/api/gmail/inbox?q=in:${emailFolder}`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
       setEmails(data.emails || []);
@@ -200,7 +214,7 @@ export default function ConversationsPage() {
     } finally {
       setLoadingEmails(false);
     }
-  }, []);
+  }, [emailFolder]);
 
   const fetchEmailDetail = useCallback(async (threadId: string) => {
     try {
@@ -220,6 +234,7 @@ export default function ConversationsPage() {
   const handleSelectEmail = (threadId: string) => {
     setSelectedEmailId(threadId);
     setSelectedId(null);
+    setShowCompose(false);
     setShowReplyCompose(false);
     setReplyDraft('');
     setReplySent(false);
@@ -276,6 +291,76 @@ export default function ConversationsPage() {
       console.error('Failed to send reply:', err);
     } finally {
       setSendingReply(false);
+    }
+  };
+
+  const openCompose = () => {
+    setShowCompose(true);
+    setSelectedEmailId(null);
+    setSelectedId(null);
+    setEmailDetail(null);
+    setComposeTo('');
+    setComposeCc('');
+    setComposeSubject('');
+    setComposeBody('');
+    setComposeSent(false);
+    setShowComposeCc(false);
+  };
+
+  const sendCompose = async () => {
+    if (!composeTo.trim() || !composeSubject.trim() || !composeBody.trim() || sendingCompose) return;
+    setSendingCompose(true);
+    try {
+      const res = await fetch('/api/gmail/compose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: composeTo.trim(),
+          cc: composeCc.trim() || undefined,
+          subject: composeSubject.trim(),
+          emailBody: composeBody.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error('Send failed');
+      const data = await res.json();
+      if (data.success) {
+        setComposeSent(true);
+        setTimeout(() => {
+          setShowCompose(false);
+          setComposeSent(false);
+          setEmailFolder('sent');
+        }, 2000);
+      }
+    } catch (err: any) {
+      console.error('Failed to send email:', err);
+    } finally {
+      setSendingCompose(false);
+    }
+  };
+
+  const generateComposeBody = async () => {
+    if (!composeTo.trim() || !composeSubject.trim()) return;
+    setGeneratingComposeBody(true);
+    try {
+      const res = await fetch('/api/gmail/compose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ai-draft',
+          to: composeTo.trim(),
+          subject: composeSubject.trim(),
+          emailBody: composeBody.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('AI draft failed');
+      const data = await res.json();
+      if (data.generatedBody) {
+        setComposeBody(data.generatedBody);
+      }
+    } catch (err: any) {
+      console.error('Failed to generate draft:', err);
+    } finally {
+      setGeneratingComposeBody(false);
     }
   };
 
@@ -515,9 +600,9 @@ export default function ConversationsPage() {
       )}
 
       {/* Two-panel layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid gap-6 ${(leftTab === 'emails' && selectedEmailId) || showCompose ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
         {/* Left: Conversations / Emails list */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className={`bg-white rounded-lg shadow overflow-hidden ${(leftTab === 'emails' && selectedEmailId) || showCompose ? 'hidden' : ''}`}>
           {/* Tab Switcher */}
           <div className="flex border-b">
             <button
@@ -592,9 +677,41 @@ export default function ConversationsPage() {
           ) : (
             <>
               <div className="px-6 py-3 bg-gray-50 border-b flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">
-                  {emails.length} email{emails.length !== 1 ? 's' : ''}
-                </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex bg-gray-200 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setEmailFolder('inbox')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                        emailFolder === 'inbox'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Inbox
+                    </button>
+                    <button
+                      onClick={() => setEmailFolder('sent')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                        emailFolder === 'sent'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Sent
+                    </button>
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {emails.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={openCompose}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    <PenSquare className="h-3 w-3" />
+                    Compose
+                  </button>
                 <button
                   onClick={fetchEmails}
                   disabled={loadingEmails}
@@ -602,6 +719,7 @@ export default function ConversationsPage() {
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${loadingEmails ? 'animate-spin' : ''}`} />
                 </button>
+                </div>
               </div>
               <div className="divide-y divide-gray-200 max-h-[556px] overflow-y-auto">
                 {loadingEmails && emails.length === 0 ? (
@@ -624,8 +742,9 @@ export default function ConversationsPage() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-gray-900 truncate max-w-[65%]">
-                          {email.from.replace(/<.*>/, '').trim() || email.from}
+                          {emailFolder === 'sent' ? `To: ${email.from.replace(/<.*>/, '').trim() || email.from}` : email.from.replace(/<.*>/, '').trim() || email.from}
                         </span>
+                        {emailFolder === 'inbox' && (
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           email.messageCount > 1
                             ? 'bg-green-100 text-green-700'
@@ -633,6 +752,7 @@ export default function ConversationsPage() {
                         }`}>
                           {email.messageCount > 1 ? 'Replied' : 'Pending'}
                         </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-700 truncate mb-1">
                         {email.subject}
@@ -654,13 +774,137 @@ export default function ConversationsPage() {
         </div>
 
         {/* Right: Transcript + Chat + Email Detail */}
-        <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[600px]">
-          {leftTab === 'emails' && selectedEmailId ? (
+        <div className={`bg-white rounded-lg shadow overflow-hidden flex flex-col ${(leftTab === 'emails' && selectedEmailId) || showCompose ? 'min-h-[70vh]' : 'max-h-[600px]'}`}>
+          {showCompose ? (
+            <>
+              {/* Compose Email View */}
+              <div className="px-6 py-3 bg-gray-50 border-b sticky top-0 z-10">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowCompose(false)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                  <span className="text-sm font-medium text-gray-900">New Email</span>
+                  <div className="w-16" />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                {composeSent ? (
+                  <div className="flex flex-col items-center justify-center h-full py-16">
+                    <div className="bg-green-100 rounded-full p-4 mb-4">
+                      <Check className="h-8 w-8 text-green-600" />
+                    </div>
+                    <p className="text-lg font-medium text-green-700">Email sent successfully!</p>
+                    <p className="text-sm text-gray-500 mt-1">Redirecting back...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">To</label>
+                      <input
+                        type="email"
+                        value={composeTo}
+                        onChange={(e) => setComposeTo(e.target.value)}
+                        placeholder="recipient@example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      {!showComposeCc && (
+                        <button
+                          onClick={() => setShowComposeCc(true)}
+                          className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                        >
+                          + Add CC
+                        </button>
+                      )}
+                    </div>
+                    {showComposeCc && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">CC</label>
+                        <input
+                          type="email"
+                          value={composeCc}
+                          onChange={(e) => setComposeCc(e.target.value)}
+                          placeholder="cc@example.com"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Subject</label>
+                      <input
+                        type="text"
+                        value={composeSubject}
+                        onChange={(e) => setComposeSubject(e.target.value)}
+                        placeholder="Email subject"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Body</label>
+                        <button
+                          onClick={generateComposeBody}
+                          disabled={generatingComposeBody || !composeTo.trim() || !composeSubject.trim()}
+                          className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded hover:bg-purple-100 transition-colors disabled:opacity-50"
+                        >
+                          {generatingComposeBody ? (
+                            <Loader className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          {generatingComposeBody ? 'Generating...' : 'AI Draft'}
+                        </button>
+                      </div>
+                      <textarea
+                        value={composeBody}
+                        onChange={(e) => setComposeBody(e.target.value)}
+                        placeholder="Write your email here... or use AI Draft to generate"
+                        rows={10}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              {!composeSent && (
+                <div className="border-t bg-gray-50 p-4 flex gap-2">
+                  <button
+                    onClick={() => setShowCompose(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={sendCompose}
+                    disabled={sendingCompose || !composeTo.trim() || !composeSubject.trim() || !composeBody.trim()}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {sendingCompose ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {sendingCompose ? 'Sending...' : 'Send Email'}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : leftTab === 'emails' && selectedEmailId ? (
             <>
               {/* Email Detail View */}
-              <div className="px-6 py-3 bg-gray-50 border-b">
+              <div className="px-6 py-3 bg-gray-50 border-b sticky top-0 z-10">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-900 truncate">
+                  <button
+                    onClick={() => { setSelectedEmailId(null); setEmailDetail(null); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm mr-4 flex-shrink-0"
+                  >
+                    <ChevronDown className="h-4 w-4 rotate-90" />
+                    Back
+                  </button>
+                  <span className="text-sm font-medium text-gray-900 truncate flex-1">
                     {emailDetail?.subject || 'Loading...'}
                   </span>
                   {selectedEmailId && emails.find(e => e.threadId === selectedEmailId) && (
@@ -695,11 +939,11 @@ export default function ConversationsPage() {
                     {/* Email Body */}
                     {emailDetail.contentType === 'html' ? (
                       <div
-                        className="text-sm text-gray-800 leading-relaxed prose prose-sm max-w-none [&_a]:text-blue-600 [&_a]:underline [&_p]:my-2 [&_br]:leading-relaxed"
+                        className="text-sm text-gray-800 leading-relaxed prose prose-sm max-w-none [&_a]:text-blue-600 [&_a]:underline [&_p]:my-2 [&_br]:leading-relaxed overflow-x-auto break-words [&_img]:max-w-full [&_table]:text-xs [&_table]:border-collapse [&_td]:border [&_td]:border-gray-200 [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-gray-200 [&_th]:px-2 [&_th]:py-1 [&_picture]:block"
                         dangerouslySetInnerHTML={{ __html: emailDetail.body }}
                       />
                     ) : (
-                      <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                      <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed break-words">
                         {emailDetail.body}
                       </div>
                     )}
@@ -710,32 +954,61 @@ export default function ConversationsPage() {
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                           Attachments ({emailDetail.attachments.length})
                         </p>
-                        <div className="space-y-2">
-                          {emailDetail.attachments.map((att, i) => (
-                            <a
-                              key={i}
-                              href={`/api/gmail/attachment?messageId=${emailDetail.messageId}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer"
+                        <div className="space-y-2 relative">
+                          {emailDetail.attachments.map((att, i) => {
+                            const attUrl = `/api/gmail/attachment?messageId=${emailDetail.messageId}&attachmentId=${encodeURIComponent(att.attachmentId)}&filename=${encodeURIComponent(att.filename)}`;
+                            const isPdf = att.mimeType === 'application/pdf' || att.filename.toLowerCase().endsWith('.pdf');
+                            return (
+                              <a
+                                key={i}
+                                href={attUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer"
+                                onMouseEnter={() => isPdf && setHoveredPdfUrl(attUrl)}
+                                onMouseLeave={() => isPdf && setHoveredPdfUrl(null)}
+                              >
+                                <div className={`flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center ${
+                                  isPdf ? 'bg-red-100 text-red-600' : att.mimeType.startsWith('image/') ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                                }`}>
+                                  {att.mimeType.startsWith('image/') ? (
+                                    <ImageIcon className="h-4 w-4" />
+                                  ) : (
+                                    <FileText className="h-4 w-4" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {att.filename}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; {att.mimeType.split('/')[1]?.toUpperCase() || att.mimeType}
+                                    {isPdf && <span className="ml-1 text-blue-500">(hover to preview)</span>}
+                                  </p>
+                                </div>
+                              </a>
+                            );
+                          })}
+                          {/* PDF Hover Preview */}
+                          {hoveredPdfUrl && (
+                            <div
+                              className="fixed right-8 top-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden"
+                              style={{ width: 480, height: 600 }}
+                              onMouseEnter={() => setHoveredPdfUrl(hoveredPdfUrl)}
+                              onMouseLeave={() => setHoveredPdfUrl(null)}
                             >
-                              <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
-                                {att.mimeType.startsWith('image/') ? (
-                                  <ImageIcon className="h-4 w-4" />
-                                ) : (
-                                  <FileText className="h-4 w-4" />
-                                )}
+                              <div className="bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 border-b flex items-center gap-2">
+                                <FileText className="h-3.5 w-3.5" />
+                                PDF Preview
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {att.filename}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {att.sizeHuman || `${Math.round(att.size / 1024)} KB`} &middot; {att.mimeType.split('/')[1]?.toUpperCase() || att.mimeType}
-                                </p>
-                              </div>
-                            </a>
-                          ))}
+                              <iframe
+                                src={hoveredPdfUrl}
+                                className="w-full border-0"
+                                style={{ height: 'calc(100% - 32px)' }}
+                                title="PDF Preview"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -750,7 +1023,7 @@ export default function ConversationsPage() {
 
               {/* Reply Section */}
               {emailDetail && (
-                <div className="border-t bg-gray-50 p-3">
+                <div className="border-t bg-gray-50 p-4">
                   {replySent ? (
                     <div className="flex items-center gap-2 text-green-600 text-sm font-medium justify-center py-2">
                       <Check className="h-4 w-4" />
@@ -758,71 +1031,114 @@ export default function ConversationsPage() {
                     </div>
                   ) : !showReplyCompose ? (
                     <button
-                      onClick={() => setShowReplyCompose(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      onClick={async () => {
+                        setShowReplyCompose(true);
+                        setReplyDrafts([]);
+                        setReplyDraft('');
+                        setGeneratingDrafts(true);
+                        try {
+                          const res = await fetch('/api/gmail/reply', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'generate-drafts', threadId: selectedEmailId }),
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.drafts) setReplyDrafts(data.drafts);
+                          }
+                        } catch (err) {
+                          console.error('Failed to generate drafts:', err);
+                        } finally {
+                          setGeneratingDrafts(false);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
                       <Reply className="h-4 w-4" />
                       Reply
                     </button>
                   ) : (
-                    <div className="space-y-2">
-                      {/* Tone selector */}
-                      <div className="flex flex-wrap gap-1">
-                        {(['professional', 'friendly', 'formal', 'hindi', 'hinglish'] as const).map((tone) => (
+                    <div className="space-y-3">
+                      {/* Draft suggestions */}
+                      {generatingDrafts ? (
+                        <div className="flex items-center justify-center gap-2 py-6 text-gray-500">
+                          <Loader className="h-5 w-5 animate-spin text-blue-600" />
+                          <span className="text-sm font-medium">Generating 3 draft replies via AI...</span>
+                        </div>
+                      ) : replyDrafts.length > 0 && !replyDraft ? (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Choose a draft:</p>
+                          {replyDrafts.map((draft, i) => {
+                            const colors = [
+                              'border-blue-200 bg-blue-50 hover:border-blue-400',
+                              'border-purple-200 bg-purple-50 hover:border-purple-400',
+                              'border-gray-200 bg-gray-50 hover:border-gray-400',
+                            ];
+                            const badgeColors = [
+                              'bg-blue-600 text-white',
+                              'bg-purple-600 text-white',
+                              'bg-gray-600 text-white',
+                            ];
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => setReplyDraft(draft.text)}
+                                className={`w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer ${colors[i] || colors[0]}`}
+                              >
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-1.5 ${badgeColors[i] || badgeColors[0]}`}>
+                                  {draft.tone}
+                                </span>
+                                <p className="text-sm text-gray-800 line-clamp-3">{draft.text}</p>
+                              </button>
+                            );
+                          })}
                           <button
-                            key={tone}
-                            onClick={() => setReplyTone(tone)}
-                            className={`px-2 py-1 rounded text-[11px] font-medium capitalize transition-colors ${
-                              replyTone === tone
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
+                            onClick={() => setReplyDraft(' ')}
+                            className="w-full text-center text-xs text-gray-500 hover:text-blue-600 py-1 transition-colors"
                           >
-                            {tone}
+                            or write your own...
                           </button>
-                        ))}
-                        <button
-                          onClick={generateAIReply}
-                          disabled={generatingReply}
-                          className="ml-auto flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded text-[11px] font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
-                        >
-                          {generatingReply ? (
-                            <Loader className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-3 w-3" />
-                          )}
-                          {generatingReply ? 'Generating...' : 'AI Generate'}
-                        </button>
-                      </div>
-                      {/* Reply textarea */}
-                      <textarea
-                        value={replyDraft}
-                        onChange={(e) => setReplyDraft(e.target.value)}
-                        placeholder="Write your reply or click AI Generate..."
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      />
-                      {/* Action buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => { setShowReplyCompose(false); setReplyDraft(''); }}
-                          className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={sendEmailReply}
-                          disabled={sendingReply || !replyDraft.trim()}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-                        >
-                          {sendingReply ? (
-                            <Loader className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Send className="h-3.5 w-3.5" />
-                          )}
-                          {sendingReply ? 'Sending...' : 'Send Reply'}
-                        </button>
-                      </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Editable textarea */}
+                          <textarea
+                            value={replyDraft}
+                            onChange={(e) => setReplyDraft(e.target.value)}
+                            placeholder="Write your reply..."
+                            rows={5}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            autoFocus
+                          />
+                          {/* Action buttons */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => { setReplyDraft(''); }}
+                              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
+                            >
+                              Back to drafts
+                            </button>
+                            <button
+                              onClick={() => { setShowReplyCompose(false); setReplyDraft(''); setReplyDrafts([]); }}
+                              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={sendEmailReply}
+                              disabled={sendingReply || !replyDraft.trim()}
+                              className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                            >
+                              {sendingReply ? (
+                                <Loader className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Send className="h-3.5 w-3.5" />
+                              )}
+                              {sendingReply ? 'Sending...' : 'Send Reply'}
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
